@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { loginUser } from '../src/api/client';
 
 export default function Login() {
@@ -11,6 +11,8 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({ email: '', password: '' });
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,11 +54,13 @@ export default function Login() {
                 // In a real app, you would store the token here
                 router.push('/home');
             } else {
-                Alert.alert('Login Failed', response.message || 'Invalid credentials');
+                setErrorMessage(response.message || 'Invalid credentials');
+                setShowErrorModal(true);
             }
         } catch (error) {
             console.error('Login error details:', error);
-            Alert.alert('Error', 'Failed to connect to server. Please check your internet connection and ensure the server is running.');
+            setErrorMessage('Failed to connect to server. Please check your internet connection.');
+            setShowErrorModal(true);
         } finally {
             setLoading(false);
         }
@@ -121,6 +125,29 @@ export default function Login() {
                     Don't have an account? <Text style={styles.signupLink} onPress={() => router.push('/register')}>Sign up</Text>
                 </Text>
             </View>
+
+            {/* Error Modal */}
+            <Modal
+                visible={showErrorModal}
+                transparent
+                animationType="fade"
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.errorIcon}>
+                            <Ionicons name="close-circle" size={80} color="#FF4B4B" />
+                        </View>
+                        <Text style={styles.errorTitle}>Login Failed</Text>
+                        <Text style={styles.errorMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowErrorModal(false)}
+                        >
+                            <Text style={styles.closeButtonText}>Try Again</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -194,6 +221,47 @@ const styles = StyleSheet.create({
     },
     signupLink: {
         color: '#A78BFA',
+        fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#1E2238',
+        borderRadius: 24,
+        padding: 40,
+        alignItems: 'center',
+        width: '85%',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 75, 75, 0.3)',
+    },
+    errorIcon: {
+        marginBottom: 24,
+    },
+    errorTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 16,
+    },
+    errorMessage: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.7)',
+        textAlign: 'center',
+        marginBottom: 32,
+    },
+    closeButton: {
+        backgroundColor: '#A78BFA',
+        borderRadius: 16,
+        paddingVertical: 16,
+        paddingHorizontal: 60,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontSize: 18,
         fontWeight: 'bold',
     },
 });

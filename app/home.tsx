@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getWallet } from '../src/api/client';
 
@@ -24,9 +24,11 @@ export default function Home() {
         }
     };
 
-    useEffect(() => {
-        fetchWallet();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchWallet();
+        }, [])
+    );
 
     const toggleBalanceVisibility = () => {
         if (!isBalanceVisible) {

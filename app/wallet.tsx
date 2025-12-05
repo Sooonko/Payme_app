@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { sendMoney, UserSearchResponse } from '../src/api/client';
 
 export default function Wallet() {
@@ -10,6 +10,7 @@ export default function Wallet() {
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserSearchResponse['data'][0] | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const quickAmounts = ['10', '20', '50', '100'];
 
@@ -63,16 +64,7 @@ export default function Wallet() {
             });
 
             if (response.success) {
-                Alert.alert('Success', 'Transaction completed successfully', [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            setAmount('');
-                            setSelectedUser(null);
-                            router.push('/home');
-                        }
-                    }
-                ]);
+                setShowSuccessModal(true);
             } else {
                 Alert.alert('Error', response.message || 'Transaction failed');
             }
@@ -159,6 +151,35 @@ export default function Wallet() {
                     )}
                 </TouchableOpacity>
             </ScrollView>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent
+                animationType="fade"
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.successIcon}>
+                            <Ionicons name="checkmark-circle" size={80} color="#4ADE80" />
+                        </View>
+                        <Text style={styles.successTitle}>Transfer Successful!</Text>
+                        <Text style={styles.successAmount}>${parseFloat(amount || '0').toFixed(2)}</Text>
+                        <Text style={styles.successRecipient}>to {selectedUser?.name}</Text>
+                        <TouchableOpacity
+                            style={styles.doneButton}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                setAmount('');
+                                setSelectedUser(null);
+                                router.push('/home');
+                            }}
+                        >
+                            <Text style={styles.doneButtonText}>Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -272,6 +293,52 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     confirmButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#1E2238',
+        borderRadius: 24,
+        padding: 40,
+        alignItems: 'center',
+        width: '85%',
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.3)',
+    },
+    successIcon: {
+        marginBottom: 24,
+    },
+    successTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 16,
+    },
+    successAmount: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#4ADE80',
+        marginBottom: 8,
+    },
+    successRecipient: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.7)',
+        marginBottom: 32,
+    },
+    doneButton: {
+        backgroundColor: '#A78BFA',
+        borderRadius: 16,
+        paddingVertical: 16,
+        paddingHorizontal: 60,
+    },
+    doneButtonText: {
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',

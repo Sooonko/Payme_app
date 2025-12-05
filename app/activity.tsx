@@ -49,42 +49,24 @@ export default function Activity() {
     };
 
     const renderItem = ({ item }: { item: TransactionHistoryResponse['data'][0] }) => {
-        // Determine if it's income or expense based on context
-        // Since we don't have the current user's wallet ID easily accessible here without another call,
-        // we might need to infer or just show generic icons.
-        // However, usually the API returns transactions relative to the user.
-        // For now, let's assume if type is 'TOPUP' it's income.
-        // If it's 'TRANSFER', we need to know if we are sender or receiver.
-        // But the API response provided by user doesn't explicitly say "direction".
-        // We can check if `fromWalletId` matches our wallet, but we don't have our wallet ID stored in state here.
-        // A simple heuristic: 
-        // If description is "Top Up", it's income.
-        // For transfers, we'll just show a generic transfer icon for now, or maybe the API filters it?
-        // Actually, let's just show the amount. If it's negative in the backend it would show -, but here it's absolute.
-        // Let's assume for now all transfers shown are relevant.
-
-        // BETTER APPROACH: The user request says "Income (money received) ... Expense (money sent)".
-        // Without knowing my wallet ID, I can't strictly tell for TRANSFER.
-        // But typically 'TOPUP' is always income.
-        // Let's just style them consistently for now.
-
-        const isTopUp = item.type === 'TOPUP';
+        // Use the flow field from the API to determine if it's income or expense
+        const isIncome = item.flow === 'INFLOW';
 
         return (
             <View style={styles.transactionItem}>
                 <View style={styles.iconContainer}>
                     <Ionicons
-                        name={isTopUp ? "add-circle" : "arrow-forward-circle"}
+                        name={isIncome ? "arrow-down-circle" : "arrow-up-circle"}
                         size={24}
-                        color={isTopUp ? "#4ADE80" : "#F87171"}
+                        color={isIncome ? "#4ADE80" : "#F87171"}
                     />
                 </View>
                 <View style={styles.detailsContainer}>
                     <Text style={styles.description}>{item.description || item.type}</Text>
                     <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
                 </View>
-                <Text style={[styles.amount, { color: isTopUp ? '#4ADE80' : 'white' }]}>
-                    {isTopUp ? '+' : ''}${item.amount.toFixed(2)}
+                <Text style={[styles.amount, { color: isIncome ? '#4ADE80' : 'white' }]}>
+                    {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
                 </Text>
             </View>
         );

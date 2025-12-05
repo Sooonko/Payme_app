@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUserProfile, UserProfileResponse } from '../src/api/client';
@@ -30,8 +31,13 @@ export default function Profile() {
         }
     };
 
-    const handleLogout = () => {
-        // In a real app, clear user session/token here
+    const handleLogout = async () => {
+        // Clear user session/token
+        await SecureStore.deleteItemAsync('userToken');
+        // Reset local state
+        setUser(null);
+        setLoading(true);
+        // Navigate to login
         router.replace('/login');
     };
 

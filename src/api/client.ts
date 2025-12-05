@@ -353,6 +353,7 @@ export interface TransactionHistoryResponse {
         status: string;
         description: string;
         createdAt: string;
+        flow: string; // 'INFLOW' or 'OUTFLOW'
     }[];
     timestamp: string;
 }
