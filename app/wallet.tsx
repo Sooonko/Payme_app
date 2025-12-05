@@ -1,31 +1,85 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { searchUsers, UserSearchResponse } from '../src/api/client';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { sendMoney, UserSearchResponse } from '../src/api/client';
 
 export default function Wallet() {
     const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<UserSearchResponse['data']>([]);
+    const params = useLocalSearchParams();
+    const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<UserSearchResponse['data'][0] | null>(null);
 
-    const handleSearch = async (text: string) => {
-        setSearchQuery(text);
-        if (text.length > 2) {
-            setLoading(true);
-            try {
-                const response = await searchUsers(text);
-                if (response.success) {
-                    setSearchResults(response.data);
-                }
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
+    const quickAmounts = ['10', '20', '50', '100'];
+
+    useFocusEffect(
+        useCallback(() => {
+            // If we don't have navigation params (meaning we came from Home or elsewhere, not User Search),
+            // we should clear the state to ensure a fresh start.
+            if (!params.userId && !params.amount) {
+                setSelectedUser(null);
+                setAmount('');
             }
-        } else {
-            setSearchResults([]);
+        }, [params.userId, params.amount])
+    );
+
+    useEffect(() => {
+        if (params.amount) {
+            setAmount(params.amount as string);
+        }
+        if (params.userId) {
+            setSelectedUser({
+                userId: params.userId as string,
+                name: params.name as string,
+                phone: params.phone as string,
+                walletId: params.walletId as string
+            });
+        }
+    }, [params.userId, params.name, params.phone, params.walletId, params.amount]);
+
+    const handleTransfer = async () => {
+        if (!amount || parseFloat(amount) <= 0) {
+            Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+            return;
+        }
+
+        if (!selectedUser) {
+            // Navigate to User Search page to select a user
+            // Pass the current amount so it can be passed back
+            router.push({
+                pathname: '/user-search',
+                params: { amount }
+            });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await sendMoney({
+                toWalletId: selectedUser.walletId,
+                amount: parseFloat(amount),
+                description: 'Transfer'
+            });
+
+            if (response.success) {
+                Alert.alert('Success', 'Transaction completed successfully', [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            setAmount('');
+                            setSelectedUser(null);
+                            router.push('/home');
+                        }
+                    }
+                ]);
+            } else {
+                Alert.alert('Error', response.message || 'Transaction failed');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to connect to server');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -43,70 +97,67 @@ export default function Wallet() {
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Search Bar */}
-                <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="rgba(255,255,255,0.5)" />
+                {/* Amount Input */}
+                <View style={styles.amountContainer}>
+                    <Text style={styles.currencySymbol}>$</Text>
                     <TextInput
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                        placeholder="Search by name or phone"
-                        placeholderTextColor="rgba(255,255,255,0.5)"
-                        style={styles.searchInput}
+                        value={amount}
+                        onChangeText={setAmount}
+                        placeholder="0.00"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        keyboardType="numeric"
+                        style={styles.amountInput}
                     />
                 </View>
 
-                {/* Search Results */}
-                <Text style={styles.sectionTitle}>Search Results</Text>
-                {loading ? (
-                    <ActivityIndicator color="#A78BFA" style={{ marginBottom: 20 }} />
-                ) : (
-                    <View style={styles.contactsList}>
-                        {searchResults.length > 0 ? (
-                            searchResults.map(user => (
-                                <TouchableOpacity
-                                    key={user.userId}
-                                    style={styles.contactCard}
-                                >
-                                    <View style={styles.contactLeft}>
-                                        <View style={styles.contactAvatar}>
-                                            <Text style={styles.contactAvatarText}>{user.name.charAt(0)}</Text>
-                                        </View>
-                                        <View>
-                                            <Text style={styles.contactName}>{user.name}</Text>
-                                            <Text style={styles.contactPhone}>{user.phone}</Text>
-                                        </View>
-                                    </View>
-                                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
-                                </TouchableOpacity>
-                            ))
-                        ) : (
-                            searchQuery.length > 2 && <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 20 }}>No users found</Text>
-                        )}
-                    </View>
+                {/* Quick Amounts */}
+                <View style={styles.quickAmountsContainer}>
+                    {quickAmounts.map((amt) => (
+                        <TouchableOpacity
+                            key={amt}
+                            style={styles.quickAmountChip}
+                            onPress={() => setAmount(amt)}
+                        >
+                            <Text style={styles.quickAmountText}>${amt}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Recipient Section (Only show if user selected, otherwise show 'Select Recipient' placeholder or nothing until next step) */}
+                {/* User flow: Enter Amount -> Next -> Search. So initially we don't show recipient. 
+                    But if they come back from search, we show recipient. */}
+                {selectedUser && (
+                    <>
+                        <Text style={styles.sectionTitle}>Recipient</Text>
+                        <View style={styles.methodCard}>
+                            <View style={styles.methodLeft}>
+                                <View style={styles.methodIcon}>
+                                    <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>{selectedUser.name.charAt(0)}</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.methodTitle}>{selectedUser.name}</Text>
+                                    <Text style={styles.methodSubtitle}>{selectedUser.phone}</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="checkmark-circle" size={24} color="#A78BFA" />
+                        </View>
+                    </>
                 )}
 
-                {/* Quick Send */}
-                <Text style={styles.sectionTitle}>Quick Send</Text>
-                <View style={styles.quickSendContainer}>
-                    <TouchableOpacity style={styles.quickSendButton}>
-                        <View style={styles.quickSendIcon}>
-                            <Ionicons name="call-outline" size={28} color="white" />
-                        </View>
-                        <Text style={styles.quickSendText}>Phone Number</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickSendButton}>
-                        <View style={styles.quickSendIcon}>
-                            <Ionicons name="mail-outline" size={28} color="white" />
-                        </View>
-                        <Text style={styles.quickSendText}>Email</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickSendButton}>
-                        <View style={styles.quickSendIcon}>
-                            <Ionicons name="qr-code-outline" size={28} color="white" />
-                        </View>
-                        <Text style={styles.quickSendText}>QR Code</Text>
-                    </TouchableOpacity>
-                </View>
+                {/* Transfer Button */}
+                <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={handleTransfer}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text style={styles.confirmButtonText}>
+                            {selectedUser ? 'Confirm Transfer' : 'Next'}
+                        </Text>
+                    )}
+                </TouchableOpacity>
             </ScrollView>
         </View>
     );
@@ -138,20 +189,40 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
     },
-    searchContainer: {
+    amountContainer: {
         flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        marginBottom: 24,
-        gap: 12,
+        marginTop: 40,
+        marginBottom: 32,
     },
-    searchInput: {
-        flex: 1,
+    currencySymbol: {
+        fontSize: 40,
         color: 'white',
-        fontSize: 16,
+        fontWeight: 'bold',
+        marginRight: 8,
+    },
+    amountInput: {
+        fontSize: 48,
+        color: 'white',
+        fontWeight: 'bold',
+        minWidth: 100,
+        textAlign: 'center',
+    },
+    quickAmountsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 40,
+    },
+    quickAmountChip: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+    },
+    quickAmountText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
     sectionTitle: {
         fontSize: 18,
@@ -159,95 +230,50 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 16,
     },
-    contactsList: {
-        marginBottom: 32,
-    },
-    contactCard: {
+    methodCard: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderRadius: 16,
         padding: 16,
-        marginBottom: 12,
+        marginBottom: 32,
+        borderWidth: 1,
+        borderColor: '#A78BFA',
     },
-    contactLeft: {
+    methodLeft: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    contactAvatar: {
+    methodIcon: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#A78BFA',
+        backgroundColor: 'rgba(167, 139, 250, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
-    contactAvatarText: {
-        fontSize: 24,
-    },
-    contactName: {
+    methodTitle: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 4,
     },
-    contactPhone: {
+    methodSubtitle: {
         color: 'rgba(255,255,255,0.5)',
         fontSize: 14,
     },
-    quickSendContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    confirmButton: {
+        backgroundColor: '#A78BFA',
+        borderRadius: 25,
+        paddingVertical: 18,
+        alignItems: 'center',
         marginBottom: 32,
     },
-    quickSendButton: {
-        flex: 1,
-        alignItems: 'center',
-        marginHorizontal: 4,
-    },
-    quickSendIcon: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    quickSendText: {
+    confirmButtonText: {
         color: 'white',
-        fontSize: 12,
-    },
-    bottomNav: {
-        flexDirection: 'row',
-        backgroundColor: '#16192E',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
-    },
-    navItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    navItemCenter: {
-        flex: 1,
-        alignItems: 'center',
-        marginTop: -20,
-    },
-    navLabel: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 10,
-        marginTop: 4,
-    },
-    scanButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#A78BFA',
-        justifyContent: 'center',
-        alignItems: 'center',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });

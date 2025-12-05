@@ -116,6 +116,13 @@ export default function RootLayout() {
           }}
         />
         <Tabs.Screen
+          name="user-search"
+          options={{
+            href: null,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
+        <Tabs.Screen
           name="send-money"
           options={{
             href: null,

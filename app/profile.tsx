@@ -1,9 +1,30 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getUserProfile, UserProfileResponse } from '../src/api/client';
 
 export default function Profile() {
     const router = useRouter();
+    const [user, setUser] = useState<UserProfileResponse['data'] | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadProfile();
+    }, []);
+
+    const loadProfile = async () => {
+        try {
+            const response = await getUserProfile();
+            if (response.success) {
+                setUser(response.data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogout = () => {
         // In a real app, clear user session/token here
@@ -27,10 +48,19 @@ export default function Profile() {
                 {/* Profile Info */}
                 <View style={styles.profileSection}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>👤</Text>
+                        <Text style={styles.avatarText}>
+                            {user ? user.name.charAt(0).toUpperCase() : '👤'}
+                        </Text>
                     </View>
-                    <Text style={styles.name}>Jane Doe</Text>
-                    <Text style={styles.email}>jane.doe@example.com</Text>
+                    {loading ? (
+                        <ActivityIndicator color="#A78BFA" />
+                    ) : (
+                        <>
+                            <Text style={styles.name}>{user ? user.name : 'Guest'}</Text>
+                            <Text style={styles.email}>{user ? user.phone : ''}</Text>
+                            {user?.email && <Text style={styles.email}>{user.email}</Text>}
+                        </>
+                    )}
                 </View>
 
                 {/* Menu Items */}

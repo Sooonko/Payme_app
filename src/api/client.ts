@@ -233,3 +233,77 @@ export const searchUsers = async (query: string): Promise<UserSearchResponse> =>
         throw error;
     }
 };
+
+export interface SendMoneyRequest {
+    toWalletId: string;
+    amount: number;
+    description?: string;
+}
+
+export interface SendMoneyResponse {
+    success: boolean;
+    message: string;
+    data: {
+        id: string;
+        fromWalletId: string;
+        toWalletId: string;
+        amount: number;
+        type: string;
+        status: string;
+        description: string;
+        createdAt: string;
+    };
+    timestamp: string;
+}
+
+export const sendMoney = async (data: SendMoneyRequest): Promise<SendMoneyResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/transactions/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Send Money error:', error);
+        throw error;
+    }
+};
+
+export interface UserProfileResponse {
+    success: boolean;
+    message: string;
+    data: {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+        createdAt: string;
+    };
+    timestamp: string;
+}
+
+export const getUserProfile = async (): Promise<UserProfileResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Get User Profile error:', error);
+        throw error;
+    }
+};
