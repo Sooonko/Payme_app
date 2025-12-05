@@ -134,6 +134,13 @@ export default function RootLayout() {
             href: null,
           }}
         />
+        <Tabs.Screen
+          name="edit-profile"
+          options={{
+            href: null,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
       </Tabs>
       <StatusBar style="auto" />
     </ThemeProvider>

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUserProfile, UserProfileResponse } from '../src/api/client';
 
@@ -9,9 +9,13 @@ export default function Profile() {
     const [user, setUser] = useState<UserProfileResponse['data'] | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadProfile();
-    }, []);
+
+
+    useFocusEffect(
+        useCallback(() => {
+            loadProfile();
+        }, [])
+    );
 
     const loadProfile = async () => {
         try {
@@ -65,7 +69,18 @@ export default function Profile() {
 
                 {/* Menu Items */}
                 <View style={styles.menuSection}>
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push({
+                            pathname: '/edit-profile',
+                            params: {
+                                name: user?.name,
+                                email: user?.email,
+                                phone: user?.phone,
+                                // address: user?.address // Address is not yet in UserProfileResponse, but we'll add it to params if we had it
+                            }
+                        })}
+                    >
                         <View style={styles.menuLeft}>
                             <Text style={styles.menuIcon}>👤</Text>
                             <Text style={styles.menuText}>Edit Profile</Text>
