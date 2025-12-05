@@ -1,0 +1,236 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+export default function Wallet() {
+    const router = useRouter();
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Sample contacts
+    const contacts = [
+        { id: 1, name: 'John Smith', phone: '+976 9999 1111', avatar: '👨' },
+        { id: 2, name: 'Sarah Johnson', phone: '+976 9999 2222', avatar: '👩' },
+        { id: 3, name: 'Mike Brown', phone: '+976 9999 3333', avatar: '👨' },
+        { id: 4, name: 'Emma Davis', phone: '+976 9999 4444', avatar: '👩' },
+    ];
+
+    const filteredContacts = contacts.filter(contact =>
+        contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contact.phone.includes(searchQuery)
+    );
+
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" />
+
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Text style={styles.backButton}>←</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Send Money</Text>
+                <View style={{ width: 40 }} />
+            </View>
+
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search" size={20} color="rgba(255,255,255,0.5)" />
+                    <TextInput
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder="Search by name or phone"
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        style={styles.searchInput}
+                    />
+                </View>
+
+                {/* Recent Contacts */}
+                <Text style={styles.sectionTitle}>Recent</Text>
+                <View style={styles.contactsList}>
+                    {filteredContacts.map(contact => (
+                        <TouchableOpacity
+                            key={contact.id}
+                            style={styles.contactCard}
+                        >
+                            <View style={styles.contactLeft}>
+                                <View style={styles.contactAvatar}>
+                                    <Text style={styles.contactAvatarText}>{contact.avatar}</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.contactName}>{contact.name}</Text>
+                                    <Text style={styles.contactPhone}>{contact.phone}</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Quick Send */}
+                <Text style={styles.sectionTitle}>Quick Send</Text>
+                <View style={styles.quickSendContainer}>
+                    <TouchableOpacity style={styles.quickSendButton}>
+                        <View style={styles.quickSendIcon}>
+                            <Ionicons name="call-outline" size={28} color="white" />
+                        </View>
+                        <Text style={styles.quickSendText}>Phone Number</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.quickSendButton}>
+                        <View style={styles.quickSendIcon}>
+                            <Ionicons name="mail-outline" size={28} color="white" />
+                        </View>
+                        <Text style={styles.quickSendText}>Email</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.quickSendButton}>
+                        <View style={styles.quickSendIcon}>
+                            <Ionicons name="qr-code-outline" size={28} color="white" />
+                        </View>
+                        <Text style={styles.quickSendText}>QR Code</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#1E2238',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 60,
+        paddingBottom: 20,
+    },
+    backButton: {
+        fontSize: 28,
+        color: 'white',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginBottom: 24,
+        gap: 12,
+    },
+    searchInput: {
+        flex: 1,
+        color: 'white',
+        fontSize: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 16,
+    },
+    contactsList: {
+        marginBottom: 32,
+    },
+    contactCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+    },
+    contactLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    contactAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#A78BFA',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    contactAvatarText: {
+        fontSize: 24,
+    },
+    contactName: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    contactPhone: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+    },
+    quickSendContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 32,
+    },
+    quickSendButton: {
+        flex: 1,
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+    quickSendIcon: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    quickSendText: {
+        color: 'white',
+        fontSize: 12,
+    },
+    bottomNav: {
+        flexDirection: 'row',
+        backgroundColor: '#16192E',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
+    },
+    navItem: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    navItemCenter: {
+        flex: 1,
+        alignItems: 'center',
+        marginTop: -20,
+    },
+    navLabel: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 10,
+        marginTop: 4,
+    },
+    scanButton: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#A78BFA',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});
