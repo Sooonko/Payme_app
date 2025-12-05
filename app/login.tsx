@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { loginUser } from '../src/api/client';
@@ -46,7 +47,8 @@ export default function Login() {
                 password
             });
 
-            if (response.success) {
+            if (response.success && response.data) {
+                await SecureStore.setItemAsync('userToken', response.data.token);
                 // In a real app, you would store the token here
                 router.push('/home');
             } else {

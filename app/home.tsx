@@ -1,9 +1,40 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getWallet } from '../src/api/client';
 
 export default function Home() {
     const router = useRouter();
+    const [balance, setBalance] = useState<number | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+
+    const fetchWallet = async () => {
+        setLoading(true);
+        try {
+            const response = await getWallet();
+            if (response.success) {
+                setBalance(response.data.balance);
+            }
+        } catch (error) {
+            console.error('Failed to fetch wallet:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchWallet();
+    }, []);
+
+    const toggleBalanceVisibility = () => {
+        if (!isBalanceVisible) {
+            fetchWallet();
+        }
+        setIsBalanceVisible(!isBalanceVisible);
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -24,7 +55,20 @@ export default function Home() {
                     <View style={styles.balanceHeader}>
                         <View>
                             <Text style={styles.balanceLabel}>↗ 2.0% today</Text>
-                            <Text style={styles.balanceAmount}>$1,6795.25</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                {loading ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <Text style={[styles.balanceAmount, !isBalanceVisible && { letterSpacing: 4, minWidth: 150 }]}>
+                                        {isBalanceVisible
+                                            ? (balance !== null ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00')
+                                            : '••••••••'}
+                                    </Text>
+                                )}
+                                <TouchableOpacity onPress={toggleBalanceVisibility} style={{ marginLeft: 10 }}>
+                                    <Ionicons name={isBalanceVisible ? "eye-outline" : "eye-off-outline"} size={24} color="white" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                         <TouchableOpacity>
                             <Text style={styles.viewAll}>View all →</Text>
@@ -39,7 +83,7 @@ export default function Home() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
                     <View style={styles.quickActions}>
-                        <TouchableOpacity style={styles.actionButton}>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/wallet')}>
                             <Ionicons name="arrow-up-outline" size={24} color="white" />
                             <Text style={styles.actionText}>Transfer</Text>
                         </TouchableOpacity>

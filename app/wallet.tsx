@@ -1,24 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { searchUsers, UserSearchResponse } from '../src/api/client';
 
 export default function Wallet() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<UserSearchResponse['data']>([]);
+    const [loading, setLoading] = useState(false);
 
-    // Sample contacts
-    const contacts = [
-        { id: 1, name: 'John Smith', phone: '+976 9999 1111', avatar: '👨' },
-        { id: 2, name: 'Sarah Johnson', phone: '+976 9999 2222', avatar: '👩' },
-        { id: 3, name: 'Mike Brown', phone: '+976 9999 3333', avatar: '👨' },
-        { id: 4, name: 'Emma Davis', phone: '+976 9999 4444', avatar: '👩' },
-    ];
-
-    const filteredContacts = contacts.filter(contact =>
-        contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contact.phone.includes(searchQuery)
-    );
+    const handleSearch = async (text: string) => {
+        setSearchQuery(text);
+        if (text.length > 2) {
+            setLoading(true);
+            try {
+                const response = await searchUsers(text);
+                if (response.success) {
+                    setSearchResults(response.data);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setSearchResults([]);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -39,34 +48,42 @@ export default function Wallet() {
                     <Ionicons name="search" size={20} color="rgba(255,255,255,0.5)" />
                     <TextInput
                         value={searchQuery}
-                        onChangeText={setSearchQuery}
+                        onChangeText={handleSearch}
                         placeholder="Search by name or phone"
                         placeholderTextColor="rgba(255,255,255,0.5)"
                         style={styles.searchInput}
                     />
                 </View>
 
-                {/* Recent Contacts */}
-                <Text style={styles.sectionTitle}>Recent</Text>
-                <View style={styles.contactsList}>
-                    {filteredContacts.map(contact => (
-                        <TouchableOpacity
-                            key={contact.id}
-                            style={styles.contactCard}
-                        >
-                            <View style={styles.contactLeft}>
-                                <View style={styles.contactAvatar}>
-                                    <Text style={styles.contactAvatarText}>{contact.avatar}</Text>
-                                </View>
-                                <View>
-                                    <Text style={styles.contactName}>{contact.name}</Text>
-                                    <Text style={styles.contactPhone}>{contact.phone}</Text>
-                                </View>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                {/* Search Results */}
+                <Text style={styles.sectionTitle}>Search Results</Text>
+                {loading ? (
+                    <ActivityIndicator color="#A78BFA" style={{ marginBottom: 20 }} />
+                ) : (
+                    <View style={styles.contactsList}>
+                        {searchResults.length > 0 ? (
+                            searchResults.map(user => (
+                                <TouchableOpacity
+                                    key={user.userId}
+                                    style={styles.contactCard}
+                                >
+                                    <View style={styles.contactLeft}>
+                                        <View style={styles.contactAvatar}>
+                                            <Text style={styles.contactAvatarText}>{user.name.charAt(0)}</Text>
+                                        </View>
+                                        <View>
+                                            <Text style={styles.contactName}>{user.name}</Text>
+                                            <Text style={styles.contactPhone}>{user.phone}</Text>
+                                        </View>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                                </TouchableOpacity>
+                            ))
+                        ) : (
+                            searchQuery.length > 2 && <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 20 }}>No users found</Text>
+                        )}
+                    </View>
+                )}
 
                 {/* Quick Send */}
                 <Text style={styles.sectionTitle}>Quick Send</Text>

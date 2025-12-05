@@ -98,3 +98,138 @@ export const loginUser = async (data: LoginRequest): Promise<LoginResponse> => {
         throw error;
     }
 };
+
+export interface WalletResponse {
+    success: boolean;
+    message: string;
+    data: {
+        id: string;
+        userId: string;
+        balance: number;
+        currency: string;
+        createdAt: string;
+    };
+    timestamp: string;
+}
+
+import * as SecureStore from 'expo-secure-store';
+
+export const getWallet = async (): Promise<WalletResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/wallets/my-wallet`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        console.log('Get Wallet Status:', response.status);
+        const text = await response.text();
+        console.log('Get Wallet Response:', text);
+
+        try {
+            const responseData = JSON.parse(text);
+            return responseData;
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            throw new Error(`Server returned ${response.status}: ${text}`);
+        }
+    } catch (error) {
+        console.error('Get Wallet error:', error);
+        throw error;
+    }
+};
+
+export interface TopUpResponse {
+    success: boolean;
+    message: string;
+    data: {
+        transactionId: number;
+        amount: number;
+        status: string;
+        provider: string;
+        qrCode: string | null;
+        createdAt: string;
+    };
+    timestamp: string;
+}
+
+export const initiateTopUp = async (amount: number): Promise<TopUpResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/topup/initiate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ amount }),
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Initiate Top Up error:', error);
+        throw error;
+    }
+};
+
+export const confirmTopUp = async (transactionId: number): Promise<TopUpResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/topup/confirm/${transactionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Confirm Top Up error:', error);
+        throw error;
+    }
+};
+
+export interface UserSearchResponse {
+    success: boolean;
+    message: string;
+    data: {
+        userId: string;
+        name: string;
+        phone: string;
+        walletId: string;
+    }[];
+    timestamp: string;
+}
+
+export const searchUsers = async (query: string): Promise<UserSearchResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const url = `${API_BASE_URL}/api/v1/users/search?query=${encodeURIComponent(query)}`;
+        console.log('Searching users with URL:', url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        console.log('Search response status:', response.status);
+        const text = await response.text();
+        console.log('Search response body:', text);
+
+        const responseData = JSON.parse(text);
+        return responseData;
+    } catch (error) {
+        console.error('Search Users error:', error);
+        throw error;
+    }
+};
