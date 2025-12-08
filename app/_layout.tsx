@@ -148,6 +148,13 @@ export default function RootLayout() {
             tabBarStyle: { display: 'none' },
           }}
         />
+        <Tabs.Screen
+          name="add-card"
+          options={{
+            href: null,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
       </Tabs>
       <StatusBar style="auto" />
     </ThemeProvider>

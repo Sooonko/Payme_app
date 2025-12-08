@@ -100,7 +100,7 @@ export default function Profile() {
 
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/cards')}
+                        onPress={() => router.push({ pathname: '/cards', params: { from: 'profile' } })}
                     >
                         <View style={styles.menuLeft}>
                             <Ionicons name="card-outline" size={20} color="#A78BFA" style={styles.menuIconStyle} />

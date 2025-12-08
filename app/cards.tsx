@@ -1,9 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Cards() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+
+    const handleBack = () => {
+        const from = params.from as string;
+        if (from === 'profile') {
+            router.push('/profile');
+        } else {
+            router.push('/home');
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -11,7 +21,7 @@ export default function Cards() {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity onPress={handleBack}>
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>My Cards</Text>

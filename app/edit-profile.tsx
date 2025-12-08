@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -30,7 +31,7 @@ export default function EditProfile() {
 
             if (response.success) {
                 Alert.alert('Success', 'Profile updated successfully', [
-                    { text: 'OK', onPress: () => router.back() }
+                    { text: 'OK', onPress: () => router.push('/profile') }
                 ]);
             } else {
                 Alert.alert('Error', response.message || 'Failed to update profile');
@@ -48,8 +49,8 @@ export default function EditProfile() {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.backButton}>←</Text>
+                <TouchableOpacity onPress={() => router.push('/profile')}>
+                    <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
                 <View style={{ width: 40 }} />
