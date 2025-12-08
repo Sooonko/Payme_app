@@ -81,57 +81,71 @@ export default function Wallet() {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.backButton}>←</Text>
-                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Send Money</Text>
-                <View style={{ width: 40 }} />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Amount Input */}
-                <View style={styles.amountContainer}>
-                    <Text style={styles.currencySymbol}>$</Text>
-                    <TextInput
-                        value={amount}
-                        onChangeText={setAmount}
-                        placeholder="0.00"
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        keyboardType="numeric"
-                        style={styles.amountInput}
-                    />
+                {/* Amount Input Card */}
+                <View style={styles.amountCard}>
+                    <Text style={styles.amountLabel}>Enter Amount</Text>
+                    <View style={styles.amountContainer}>
+                        <Text style={styles.currencySymbol}>$</Text>
+                        <TextInput
+                            value={amount}
+                            onChangeText={setAmount}
+                            placeholder="0.00"
+                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            keyboardType="numeric"
+                            style={styles.amountInput}
+                        />
+                    </View>
                 </View>
 
                 {/* Quick Amounts */}
+                <Text style={styles.quickAmountLabel}>Quick Amount</Text>
                 <View style={styles.quickAmountsContainer}>
                     {quickAmounts.map((amt) => (
                         <TouchableOpacity
                             key={amt}
-                            style={styles.quickAmountChip}
+                            style={[
+                                styles.quickAmountChip,
+                                amount === amt && styles.quickAmountChipActive
+                            ]}
                             onPress={() => setAmount(amt)}
                         >
-                            <Text style={styles.quickAmountText}>${amt}</Text>
+                            <Text style={[
+                                styles.quickAmountText,
+                                amount === amt && styles.quickAmountTextActive
+                            ]}>${amt}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* Recipient Section (Only show if user selected, otherwise show 'Select Recipient' placeholder or nothing until next step) */}
-                {/* User flow: Enter Amount -> Next -> Search. So initially we don't show recipient. 
-                    But if they come back from search, we show recipient. */}
+                {/* Recipient Section */}
                 {selectedUser && (
                     <>
-                        <Text style={styles.sectionTitle}>Recipient</Text>
-                        <View style={styles.methodCard}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Send To</Text>
+                            <TouchableOpacity onPress={() => setSelectedUser(null)}>
+                                <Text style={styles.changeText}>Change</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.recipientCard}>
                             <View style={styles.methodLeft}>
-                                <View style={styles.methodIcon}>
-                                    <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>{selectedUser.name.charAt(0)}</Text>
+                                <View style={styles.recipientAvatar}>
+                                    <Text style={styles.avatarText}>{selectedUser.name.charAt(0).toUpperCase()}</Text>
                                 </View>
-                                <View>
-                                    <Text style={styles.methodTitle}>{selectedUser.name}</Text>
-                                    <Text style={styles.methodSubtitle}>{selectedUser.phone}</Text>
+                                <View style={styles.recipientInfo}>
+                                    <Text style={styles.recipientName}>{selectedUser.name}</Text>
+                                    <View style={styles.phoneRow}>
+                                        <Ionicons name="call-outline" size={14} color="rgba(255,255,255,0.5)" />
+                                        <Text style={styles.recipientPhone}>{selectedUser.phone}</Text>
+                                    </View>
                                 </View>
                             </View>
-                            <Ionicons name="checkmark-circle" size={24} color="#A78BFA" />
+                            <View style={styles.checkmarkBadge}>
+                                <Ionicons name="checkmark" size={16} color="white" />
+                            </View>
                         </View>
                     </>
                 )}
@@ -145,9 +159,17 @@ export default function Wallet() {
                     {loading ? (
                         <ActivityIndicator color="white" />
                     ) : (
-                        <Text style={styles.confirmButtonText}>
-                            {selectedUser ? 'Confirm Transfer' : 'Next'}
-                        </Text>
+                        <>
+                            <Text style={styles.confirmButtonText}>
+                                {selectedUser ? 'Confirm Transfer' : 'Select Recipient'}
+                            </Text>
+                            <Ionicons
+                                name={selectedUser ? "paper-plane" : "arrow-forward"}
+                                size={20}
+                                color="white"
+                                style={{ marginLeft: 8 }}
+                            />
+                        </>
                     )}
                 </TouchableOpacity>
             </ScrollView>
@@ -191,7 +213,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 60,
@@ -210,87 +232,166 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
     },
+    amountCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 24,
+        padding: 24,
+        marginTop: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
+    },
+    amountLabel: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.6)',
+        marginBottom: 16,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
     amountContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 32,
     },
     currencySymbol: {
-        fontSize: 40,
-        color: 'white',
+        fontSize: 36,
+        color: '#A78BFA',
         fontWeight: 'bold',
         marginRight: 8,
     },
     amountInput: {
-        fontSize: 48,
+        fontSize: 44,
         color: 'white',
         fontWeight: 'bold',
-        minWidth: 100,
+        minWidth: 120,
         textAlign: 'center',
+    },
+    quickAmountLabel: {
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.5)',
+        marginBottom: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     quickAmountsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 40,
+        marginBottom: 28,
+        gap: 8,
     },
     quickAmountChip: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 20,
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
+        alignItems: 'center',
+    },
+    quickAmountChipActive: {
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        borderColor: '#A78BFA',
     },
     quickAmountText: {
-        color: 'white',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontWeight: '600',
+        fontSize: 15,
+    },
+    quickAmountTextActive: {
+        color: '#A78BFA',
         fontWeight: 'bold',
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 16,
-    },
-    methodCard: {
+    sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 16,
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    changeText: {
+        fontSize: 14,
+        color: '#A78BFA',
+        fontWeight: '600',
+    },
+    recipientCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 20,
         padding: 16,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: '#A78BFA',
+        borderColor: 'rgba(167, 139, 250, 0.2)',
     },
     methodLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
-    methodIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(167, 139, 250, 0.2)',
+    recipientAvatar: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: '#A78BFA',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 14,
     },
-    methodTitle: {
+    avatarText: {
         color: 'white',
-        fontSize: 16,
+        fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 4,
     },
-    methodSubtitle: {
-        color: 'rgba(255,255,255,0.5)',
+    recipientInfo: {
+        flex: 1,
+    },
+    recipientName: {
+        color: 'white',
+        fontSize: 17,
+        fontWeight: 'bold',
+        marginBottom: 6,
+    },
+    phoneRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    recipientPhone: {
+        color: 'rgba(255, 255, 255, 0.6)',
         fontSize: 14,
     },
+    checkmarkBadge: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#A78BFA',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     confirmButton: {
+        flexDirection: 'row',
         backgroundColor: '#A78BFA',
         borderRadius: 25,
         paddingVertical: 18,
         alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 32,
+        shadowColor: '#A78BFA',
+        shadowOffset: {
+            width: 0,
+            height: 6,
+        },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        elevation: 8,
     },
     confirmButtonText: {
         color: 'white',

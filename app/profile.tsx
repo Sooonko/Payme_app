@@ -47,11 +47,7 @@ export default function Profile() {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.backButton}>←</Text>
-                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Profile</Text>
-                <View style={{ width: 40 }} />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -88,42 +84,42 @@ export default function Profile() {
                         })}
                     >
                         <View style={styles.menuLeft}>
-                            <Text style={styles.menuIcon}>👤</Text>
+                            <Ionicons name="person-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
                             <Text style={styles.menuText}>Edit Profile</Text>
                         </View>
-                        <Text style={styles.menuArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.menuItem}>
                         <View style={styles.menuLeft}>
-                            <Text style={styles.menuIcon}>🔒</Text>
+                            <Ionicons name="shield-checkmark-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
                             <Text style={styles.menuText}>Security</Text>
                         </View>
-                        <Text style={styles.menuArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.menuItem}>
                         <View style={styles.menuLeft}>
-                            <Text style={styles.menuIcon}>🔔</Text>
+                            <Ionicons name="notifications-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
                             <Text style={styles.menuText}>Notifications</Text>
                         </View>
-                        <Text style={styles.menuArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.menuItem}>
                         <View style={styles.menuLeft}>
-                            <Text style={styles.menuIcon}>❓</Text>
+                            <Ionicons name="help-circle-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
                             <Text style={styles.menuText}>Help & Support</Text>
                         </View>
-                        <Text style={styles.menuArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.menuItem}>
                         <View style={styles.menuLeft}>
-                            <Text style={styles.menuIcon}>⚙️</Text>
+                            <Ionicons name="settings-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
                             <Text style={styles.menuText}>Settings</Text>
                         </View>
-                        <Text style={styles.menuArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
                 </View>
 
@@ -144,7 +140,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 60,
@@ -206,17 +202,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    menuIcon: {
-        fontSize: 24,
+    menuIconStyle: {
         marginRight: 16,
     },
     menuText: {
         fontSize: 16,
         color: 'white',
-    },
-    menuArrow: {
-        fontSize: 20,
-        color: 'rgba(255,255,255,0.3)',
     },
     logoutButton: {
         flexDirection: 'row',
@@ -225,7 +216,7 @@ const styles = StyleSheet.create({
         padding: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 32,
+        marginTop: 16,
         marginBottom: 32,
     },
     logoutText: {

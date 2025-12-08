@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import SuccessModal from '../components/SuccessModal';
 import { confirmTopUp, initiateTopUp, TopUpResponse } from '../src/api/client';
 
 export default function TopUp() {
@@ -9,6 +10,8 @@ export default function TopUp() {
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [transaction, setTransaction] = useState<TopUpResponse['data'] | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successAmount, setSuccessAmount] = useState(0);
 
     const quickAmounts = ['10', '20', '50', '100'];
 
@@ -48,19 +51,8 @@ export default function TopUp() {
         try {
             const response = await confirmTopUp(transaction.transactionId);
             if (response.success) {
-                Alert.alert(
-                    'Success',
-                    'Top-up completed successfully!',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => {
-                                setTransaction(null);
-                                setAmount('');
-                            },
-                        },
-                    ]
-                );
+                setSuccessAmount(transaction.amount);
+                setShowSuccessModal(true);
             } else {
                 Alert.alert('Error', response.message || 'Failed to confirm top-up');
             }
@@ -69,6 +61,12 @@ export default function TopUp() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSuccessClose = () => {
+        setShowSuccessModal(false);
+        setTransaction(null);
+        setAmount('');
     };
 
     return (
@@ -137,30 +135,61 @@ export default function TopUp() {
                             {loading ? (
                                 <ActivityIndicator color="white" />
                             ) : (
-                                <Text style={styles.confirmButtonText}>Confirm Top Up</Text>
+                                <>
+                                    <Text style={styles.confirmButtonText}>Confirm Top Up</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                </>
                             )}
                         </TouchableOpacity>
                     </>
                 ) : (
                     <View style={styles.confirmationContainer}>
-                        <View style={styles.qrContainer}>
-                            {transaction.qrCode ? (
-                                <Image
-                                    source={{ uri: transaction.qrCode }}
-                                    style={styles.qrCode}
-                                    resizeMode="contain"
-                                />
-                            ) : (
-                                <View style={styles.placeholderQr}>
-                                    <Ionicons name="qr-code-outline" size={100} color="white" />
-                                    <Text style={styles.placeholderText}>QR Code not available</Text>
-                                </View>
-                            )}
+                        {/* Header Section */}
+                        <View style={styles.confirmHeader}>
+                            <Ionicons name="checkmark-circle" size={32} color="#10B981" />
+                            <Text style={styles.confirmHeaderText}>Ready to Complete</Text>
                         </View>
 
-                        <Text style={styles.confirmAmount}>${transaction.amount.toFixed(2)}</Text>
-                        <Text style={styles.confirmStatus}>Status: {transaction.status}</Text>
+                        {/* QR Code Card */}
+                        <View style={styles.qrCard}>
+                            <View style={styles.qrContainer}>
+                                {transaction.qrCode ? (
+                                    <Image
+                                        source={{ uri: transaction.qrCode }}
+                                        style={styles.qrCode}
+                                        resizeMode="contain"
+                                    />
+                                ) : (
+                                    <View style={styles.placeholderQr}>
+                                        <Ionicons name="qr-code-outline" size={100} color="rgba(167, 139, 250, 0.4)" />
+                                        <Text style={styles.placeholderText}>QR Code not available</Text>
+                                    </View>
+                                )}
+                            </View>
 
+                            {/* QR Code Label */}
+                            <Text style={styles.qrLabel}>Scan to Pay</Text>
+                        </View>
+
+                        {/* Transaction Details */}
+                        <View style={styles.detailsCard}>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Amount</Text>
+                                <Text style={styles.detailAmount}>${transaction.amount.toFixed(2)}</Text>
+                            </View>
+
+                            <View style={styles.divider} />
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Status</Text>
+                                <View style={styles.statusBadge}>
+                                    <View style={styles.statusDot} />
+                                    <Text style={styles.statusText}>{transaction.status}</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Confirm Button */}
                         <TouchableOpacity
                             style={styles.confirmButton}
                             onPress={handleConfirm}
@@ -169,12 +198,26 @@ export default function TopUp() {
                             {loading ? (
                                 <ActivityIndicator color="white" />
                             ) : (
-                                <Text style={styles.confirmButtonText}>Confirm Payment</Text>
+                                <>
+                                    <Text style={styles.confirmButtonText}>Confirm Payment</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                </>
                             )}
                         </TouchableOpacity>
+
+                        {/* Help Text */}
+                        <Text style={styles.helpText}>
+                            Click confirm after scanning the QR code or making payment
+                        </Text>
                     </View>
                 )}
             </ScrollView>
+
+            <SuccessModal
+                visible={showSuccessModal}
+                amount={successAmount}
+                onClose={handleSuccessClose}
+            />
         </View>
     );
 }
@@ -281,10 +324,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     confirmButton: {
+        flexDirection: 'row',
         backgroundColor: '#A78BFA',
         borderRadius: 25,
         paddingVertical: 18,
         alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 32,
     },
     confirmButtonText: {
@@ -293,18 +338,48 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     confirmationContainer: {
+        alignItems: 'stretch',
+        marginTop: 12,
+        paddingHorizontal: 4,
+    },
+    confirmHeader: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 20,
+        justifyContent: 'center',
+        marginBottom: 24,
+        gap: 12,
+    },
+    confirmHeaderText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    qrCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
     },
     qrContainer: {
-        width: 250,
-        height: 250,
+        width: 220,
+        height: 220,
         backgroundColor: 'white',
-        borderRadius: 20,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
         overflow: 'hidden',
+        shadowColor: '#A78BFA',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     qrCode: {
         width: '100%',
@@ -313,24 +388,77 @@ const styles = StyleSheet.create({
     placeholderQr: {
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: 'rgba(30, 34, 56, 0.4)',
         width: '100%',
         height: '100%',
     },
     placeholderText: {
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(167, 139, 250, 0.5)',
         marginTop: 12,
+        fontSize: 13,
     },
-    confirmAmount: {
-        fontSize: 36,
+    qrLabel: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.6)',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    detailsCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.15)',
+    },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    detailLabel: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontWeight: '500',
+    },
+    detailAmount: {
+        fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
-        marginBottom: 8,
     },
-    confirmStatus: {
-        fontSize: 16,
+    divider: {
+        height: 1,
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        marginVertical: 4,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 6,
+    },
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#A78BFA',
+    },
+    statusText: {
+        fontSize: 13,
         color: '#A78BFA',
-        marginBottom: 32,
-        fontWeight: 'bold',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+    helpText: {
+        fontSize: 12,
+        color: 'rgba(255, 255, 255, 0.4)',
+        textAlign: 'center',
+        marginTop: 16,
+        fontStyle: 'italic',
     },
 });
