@@ -16,26 +16,34 @@ export default function Wallet() {
 
     useFocusEffect(
         useCallback(() => {
-            // If we don't have navigation params (meaning we came from Home or elsewhere, not User Search),
-            // we should clear the state to ensure a fresh start.
-            if (!params.userId && !params.amount) {
+            // Only clear state if we're coming from a non-user-search navigation
+            // (e.g., from home, bottom nav, etc.)
+            const hasUserParams = params.userId && params.name && params.phone && params.walletId;
+
+            if (!hasUserParams && !params.amount) {
                 setSelectedUser(null);
                 setAmount('');
             }
-        }, [params.userId, params.amount])
+        }, [params.userId, params.name, params.phone, params.walletId, params.amount])
     );
 
     useEffect(() => {
+        // Update amount when it changes in params
         if (params.amount) {
             setAmount(params.amount as string);
         }
-        if (params.userId) {
+
+        // Update selected user when params change
+        if (params.userId && params.name && params.phone && params.walletId) {
             setSelectedUser({
                 userId: params.userId as string,
                 name: params.name as string,
                 phone: params.phone as string,
                 walletId: params.walletId as string
             });
+        } else if (!params.userId) {
+            // Clear selected user if userId param is removed
+            setSelectedUser(null);
         }
     }, [params.userId, params.name, params.phone, params.walletId, params.amount]);
 
@@ -194,7 +202,6 @@ export default function Wallet() {
                                 setShowSuccessModal(false);
                                 setAmount('');
                                 setSelectedUser(null);
-                                router.push('/home');
                             }}
                         >
                             <Text style={styles.doneButtonText}>Done</Text>

@@ -85,45 +85,59 @@ export default function TopUp() {
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {!transaction ? (
                     <>
-                        {/* Amount Input */}
-                        <View style={styles.amountContainer}>
-                            <Text style={styles.currencySymbol}>$</Text>
-                            <TextInput
-                                value={amount}
-                                onChangeText={setAmount}
-                                placeholder="0.00"
-                                placeholderTextColor="rgba(255,255,255,0.3)"
-                                keyboardType="numeric"
-                                style={styles.amountInput}
-                            />
+                        {/* Amount Input Card */}
+                        <View style={styles.amountCard}>
+                            <Text style={styles.amountLabel}>Enter Amount</Text>
+                            <View style={styles.amountContainer}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <TextInput
+                                    value={amount}
+                                    onChangeText={setAmount}
+                                    placeholder="0.00"
+                                    placeholderTextColor="rgba(255,255,255,0.3)"
+                                    keyboardType="numeric"
+                                    style={styles.amountInput}
+                                />
+                            </View>
                         </View>
 
                         {/* Quick Amounts */}
+                        <Text style={styles.quickAmountLabel}>Quick Amount</Text>
                         <View style={styles.quickAmountsContainer}>
                             {quickAmounts.map((amt) => (
                                 <TouchableOpacity
                                     key={amt}
-                                    style={styles.quickAmountChip}
+                                    style={[
+                                        styles.quickAmountChip,
+                                        amount === amt && styles.quickAmountChipActive
+                                    ]}
                                     onPress={() => setAmount(amt)}
                                 >
-                                    <Text style={styles.quickAmountText}>${amt}</Text>
+                                    <Text style={[
+                                        styles.quickAmountText,
+                                        amount === amt && styles.quickAmountTextActive
+                                    ]}>${amt}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
                         {/* Payment Method */}
-                        <Text style={styles.sectionTitle}>Payment Method</Text>
-                        <TouchableOpacity style={styles.methodCard}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Payment Method</Text>
+                        </View>
+                        <TouchableOpacity style={styles.paymentMethodCard}>
                             <View style={styles.methodLeft}>
-                                <View style={styles.methodIcon}>
-                                    <Ionicons name="card-outline" size={24} color="white" />
+                                <View style={styles.methodIconContainer}>
+                                    <Ionicons name="card-outline" size={24} color="#A78BFA" />
                                 </View>
-                                <View>
+                                <View style={styles.methodInfo}>
                                     <Text style={styles.methodTitle}>Bank Card</Text>
                                     <Text style={styles.methodSubtitle}>**** **** **** 1234</Text>
                                 </View>
                             </View>
-                            <Ionicons name="checkmark-circle" size={24} color="#A78BFA" />
+                            <View style={styles.checkmarkBadge}>
+                                <Ionicons name="checkmark" size={16} color="white" />
+                            </View>
                         </TouchableOpacity>
 
                         {/* Initiate Button */}
@@ -248,70 +262,116 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
     },
+    amountCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 24,
+        padding: 24,
+        marginTop: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
+    },
+    amountLabel: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.6)',
+        marginBottom: 16,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
     amountContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 32,
     },
     currencySymbol: {
-        fontSize: 40,
-        color: 'white',
+        fontSize: 36,
+        color: '#A78BFA',
         fontWeight: 'bold',
         marginRight: 8,
     },
     amountInput: {
-        fontSize: 48,
+        fontSize: 44,
         color: 'white',
         fontWeight: 'bold',
-        minWidth: 100,
+        minWidth: 120,
         textAlign: 'center',
+    },
+    quickAmountLabel: {
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.5)',
+        marginBottom: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     quickAmountsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 40,
+        marginBottom: 28,
+        gap: 8,
     },
     quickAmountChip: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 20,
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
+        alignItems: 'center',
+    },
+    quickAmountChipActive: {
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        borderColor: '#A78BFA',
     },
     quickAmountText: {
-        color: 'white',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontWeight: '600',
+        fontSize: 15,
+    },
+    quickAmountTextActive: {
+        color: '#A78BFA',
         fontWeight: 'bold',
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 16,
-    },
-    methodCard: {
+    sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 16,
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    paymentMethodCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: 20,
         padding: 16,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: '#A78BFA',
+        borderColor: 'rgba(167, 139, 250, 0.2)',
     },
     methodLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
-    methodIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(167, 139, 250, 0.2)',
+    methodIconContainer: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 14,
+    },
+    methodInfo: {
+        flex: 1,
     },
     methodTitle: {
         color: 'white',
@@ -322,6 +382,14 @@ const styles = StyleSheet.create({
     methodSubtitle: {
         color: 'rgba(255,255,255,0.5)',
         fontSize: 14,
+    },
+    checkmarkBadge: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#A78BFA',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     confirmButton: {
         flexDirection: 'row',

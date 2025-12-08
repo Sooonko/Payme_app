@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { searchUsers, UserSearchResponse } from '../src/api/client';
 
@@ -10,6 +10,14 @@ export default function UserSearch() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResponse['data']>([]);
     const [loading, setLoading] = useState(false);
+
+    // Reset search state when page is focused (user navigates to this page)
+    useFocusEffect(
+        useCallback(() => {
+            setSearchQuery('');
+            setSearchResults([]);
+        }, [])
+    );
 
     const handleSearch = async (text: string) => {
         setSearchQuery(text);

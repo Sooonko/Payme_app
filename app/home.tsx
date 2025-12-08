@@ -73,7 +73,10 @@ export default function Home() {
                             </View>
                         </View>
                         <TouchableOpacity>
-                            <Text style={styles.viewAll}>View all →</Text>
+                            <View style={styles.viewAllContainer}>
+                                <Text style={styles.viewAll}>View all</Text>
+                                <Ionicons name="chevron-forward" size={16} color="white" style={{ marginLeft: 4 }} />
+                            </View>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity style={styles.addButton} onPress={() => router.push('/topup')}>
@@ -107,9 +110,12 @@ export default function Home() {
                 {/* My Activities */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>My Activities</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.viewAll}>View all →</Text>
+                        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+                        <TouchableOpacity onPress={() => router.push('/activity')}>
+                            <View style={styles.viewAllContainer}>
+                                <Text style={styles.viewAll}>View all</Text>
+                                <Ionicons name="chevron-forward" size={16} color="#A78BFA" style={{ marginLeft: 4 }} />
+                            </View>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity style={styles.activityCard}>
@@ -190,6 +196,10 @@ const styles = StyleSheet.create({
     viewAll: {
         color: 'white',
         fontSize: 14,
+    },
+    viewAllContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     addButton: {
         position: 'absolute',
