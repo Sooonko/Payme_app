@@ -98,10 +98,13 @@ export default function Profile() {
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/cards')}
+                    >
                         <View style={styles.menuLeft}>
-                            <Ionicons name="notifications-outline" size={24} color="#A78BFA" style={styles.menuIconStyle} />
-                            <Text style={styles.menuText}>Notifications</Text>
+                            <Ionicons name="card-outline" size={20} color="#A78BFA" style={styles.menuIconStyle} />
+                            <Text style={styles.menuText}>My Cards</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>

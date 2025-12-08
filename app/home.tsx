@@ -46,8 +46,8 @@ export default function Home() {
                 <View>
                     <Text style={styles.greeting}>Hello, Jane Doe!</Text>
                 </View>
-                <TouchableOpacity style={styles.notificationIcon}>
-                    <Ionicons name="notifications-outline" size={20} color="white" />
+                <TouchableOpacity style={styles.notificationIcon} onPress={() => router.push('/cards')}>
+                    <Ionicons name="card-outline" size={20} color="white" />
                 </TouchableOpacity>
             </View>
 
