@@ -1,16 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getWallet } from '../src/api/client';
+import { ActivityIndicator, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { CardData, getCards, getWallet } from '../src/api/client';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.75; // Card takes 75% of screen width
+
+// Helper function to get card gradient colors
+const getCardColor = (index: number): string => {
+    const colors = [
+        '#A78BFA', // Purple (default)
+        '#60A5FA', // Blue
+        '#34D399', // Green
+        '#F59E0B', // Orange
+        '#EC4899', // Pink
+    ];
+    return colors[index % colors.length];
+};
 
 export default function Home() {
     const router = useRouter();
     const [balance, setBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+    const [balanceVisible, setBalanceVisible] = useState(true);
+    const [cards, setCards] = useState<CardData[]>([]);
 
-    const fetchWallet = async () => {
+    const loadWallet = async () => {
         setLoading(true);
         try {
             const response = await getWallet();
@@ -18,23 +34,35 @@ export default function Home() {
                 setBalance(response.data.balance);
             }
         } catch (error) {
-            console.error('Failed to fetch wallet:', error);
+            console.error('Failed to load wallet:', error);
         } finally {
             setLoading(false);
         }
     };
 
+    const loadCards = async () => {
+        try {
+            const response = await getCards();
+            if (response.success) {
+                setCards(response.data);
+            }
+        } catch (error) {
+            console.error('Failed to load cards:', error);
+        }
+    };
+
     useFocusEffect(
         useCallback(() => {
-            fetchWallet();
+            loadWallet();
+            loadCards();
         }, [])
     );
 
     const toggleBalanceVisibility = () => {
-        if (!isBalanceVisible) {
-            fetchWallet();
+        if (!balanceVisible) {
+            loadWallet();
         }
-        setIsBalanceVisible(!isBalanceVisible);
+        setBalanceVisible(!balanceVisible);
     };
 
     return (
@@ -55,84 +83,137 @@ export default function Home() {
                 {/* Balance Card */}
                 <View style={styles.balanceCard}>
                     <View style={styles.balanceHeader}>
-                        <View>
-                            <Text style={styles.balanceLabel}>↗ 2.0% today</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                {loading ? (
-                                    <ActivityIndicator color="white" />
-                                ) : (
-                                    <Text style={[styles.balanceAmount, !isBalanceVisible && { letterSpacing: 4, minWidth: 150 }]}>
-                                        {isBalanceVisible
-                                            ? (balance !== null ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00')
-                                            : '••••••••'}
-                                    </Text>
-                                )}
-                                <TouchableOpacity onPress={toggleBalanceVisibility} style={{ marginLeft: 10 }}>
-                                    <Ionicons name={isBalanceVisible ? "eye-outline" : "eye-off-outline"} size={24} color="white" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <TouchableOpacity>
-                            <View style={styles.viewAllContainer}>
-                                <Text style={styles.viewAll}>View all</Text>
-                                <Ionicons name="chevron-forward" size={16} color="white" style={{ marginLeft: 4 }} />
-                            </View>
+                        <Text style={styles.balanceLabel}>Total Balance</Text>
+                        <TouchableOpacity
+                            onPress={toggleBalanceVisibility}
+                            style={styles.eyeButton}
+                        >
+                            <Ionicons
+                                name={balanceVisible ? "eye-outline" : "eye-off-outline"}
+                                size={20}
+                                color="rgba(255,255,255,0.7)"
+                            />
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.addButton} onPress={() => router.push('/topup')}>
-                        <Text style={styles.addButtonText}>+</Text>
-                    </TouchableOpacity>
+                    {loading ? (
+                        <ActivityIndicator color="white" style={{ marginTop: 8 }} />
+                    ) : (
+                        <Text style={styles.balanceAmount}>
+                            {balanceVisible ? `$${(balance || 0).toFixed(2)}` : '••••••'}
+                        </Text>
+                    )}
                 </View>
+
+                {/* Card Carousel */}
+                {cards.length > 0 && (
+                    <View style={styles.cardCarouselSection}>
+                        <Text style={styles.carouselTitle}>My Cards</Text>
+                        <ScrollView
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            snapToInterval={CARD_WIDTH + 16}
+                            decelerationRate="fast"
+                            contentContainerStyle={styles.cardCarouselContent}
+                        >
+                            {cards.map((card, index) => (
+                                <TouchableOpacity
+                                    key={card.id}
+                                    style={styles.cardCarouselItem}
+                                    onPress={() => router.push({ pathname: '/cards', params: { from: 'home' } })}
+                                    activeOpacity={0.9}
+                                >
+                                    <View style={[
+                                        styles.miniCard,
+                                        { backgroundColor: getCardColor(index) }
+                                    ]}>
+                                        <View style={styles.miniCardTop}>
+                                            <Ionicons name="card" size={24} color="white" />
+                                            <Text style={styles.miniCardType}>{card.cardType}</Text>
+                                        </View>
+                                        {card.isDefault && (
+                                            <View style={styles.miniDefaultBadge}>
+                                                <Text style={styles.miniDefaultText}>Default</Text>
+                                            </View>
+                                        )}
+                                        <Text style={styles.miniCardNumber}>
+                                            •••• •••• •••• {card.cardNumberLast4}
+                                        </Text>
+                                        <View style={styles.miniCardBottom}>
+                                            <Text style={styles.miniCardName} numberOfLines={1}>
+                                                {card.cardHolderName}
+                                            </Text>
+                                            <Text style={styles.miniCardExpiry}>
+                                                {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
 
                 {/* Quick Actions */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
                     <View style={styles.quickActions}>
                         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/wallet')}>
-                            <Ionicons name="arrow-up-outline" size={24} color="white" />
-                            <Text style={styles.actionText}>Transfer</Text>
+                            <View style={styles.actionIcon}>
+                                <Ionicons name="paper-plane" size={24} color="white" />
+                            </View>
+                            <Text style={styles.actionText} numberOfLines={1}>Send</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionButton}>
-                            <Ionicons name="arrow-down-outline" size={24} color="white" />
-                            <Text style={styles.actionText}>Receive</Text>
+                            <View style={styles.actionIcon}>
+                                <Ionicons name="download" size={24} color="white" />
+                            </View>
+                            <Text style={styles.actionText} numberOfLines={1}>Receive</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/topup')}>
+                            <View style={styles.actionIcon}>
+                                <Ionicons name="add-circle" size={24} color="white" />
+                            </View>
+                            <Text style={styles.actionText} numberOfLines={1}>Top Up</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionButton}>
-                            <Ionicons name="card-outline" size={24} color="white" />
-                            <Text style={styles.actionText}>Buy</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Ionicons name="cash-outline" size={24} color="white" />
-                            <Text style={styles.actionText}>Sell</Text>
+                            <View style={styles.actionIcon}>
+                                <Ionicons name="cart" size={24} color="white" />
+                            </View>
+                            <Text style={styles.actionText} numberOfLines={1}>Buy</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* My Activities */}
+                {/* Recent Transactions */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Recent Transactions</Text>
-                        <TouchableOpacity onPress={() => router.push('/activity')}>
-                            <View style={styles.viewAllContainer}>
-                                <Text style={styles.viewAll}>View all</Text>
-                                <Ionicons name="chevron-forward" size={16} color="#A78BFA" style={{ marginLeft: 4 }} />
-                            </View>
+                        <TouchableOpacity
+                            style={styles.viewAllContainer}
+                            onPress={() => router.push('/activity')}
+                        >
+                            <Text style={styles.viewAll}>View all</Text>
+                            <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.activityCard}>
-                        <View style={styles.activityLeft}>
-                            <View style={styles.activityIcon}>
-                                <Text style={styles.activityIconText}>₿</Text>
+                    <View style={styles.transactionsList}>
+                        <View style={styles.transactionItem}>
+                            <View style={styles.transactionLeft}>
+                                <View style={styles.transactionIcon}>
+                                    <Text style={styles.transactionIconText}>₿</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.transactionTitle}>SEEME</Text>
+                                    <Text style={styles.transactionSubtitle}>USD 48789.00</Text>
+                                </View>
                             </View>
-                            <View>
-                                <Text style={styles.activityTitle}>SEEME</Text>
-                                <Text style={styles.activitySubtitle}>USD 48789.00</Text>
-                            </View>
+                            <Text style={styles.transactionAmount}>+$1,200</Text>
                         </View>
-                        <Text style={styles.activityAmount}>+ $1,200.25</Text>
-                    </TouchableOpacity>
+                    </View>
                 </View>
-            </ScrollView >
-        </View >
+            </ScrollView>
+        </View>
     );
 }
 
@@ -162,61 +243,111 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    iconText: {
-        fontSize: 20,
-    },
     content: {
         flex: 1,
         paddingHorizontal: 20,
     },
     balanceCard: {
-        backgroundColor: '#A78BFA',
+        backgroundColor: 'rgba(255,255,255,0.05)',
         borderRadius: 20,
-        padding: 24,
-        marginBottom: 24,
-        minHeight: 160,
-        position: 'relative',
+        padding: 20,
+        marginBottom: 20,
     },
     balanceHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
+        alignItems: 'center',
+        marginBottom: 8,
     },
     balanceLabel: {
-        color: 'white',
+        color: 'rgba(255,255,255,0.7)',
         fontSize: 14,
-        marginBottom: 12,
+    },
+    eyeButton: {
+        padding: 4,
     },
     balanceAmount: {
-        color: 'white',
         fontSize: 36,
         fontWeight: 'bold',
-    },
-    viewAll: {
         color: 'white',
-        fontSize: 14,
     },
-    viewAllContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    // Card Carousel Styles
+    cardCarouselSection: {
+        marginBottom: 24,
     },
-    addButton: {
-        position: 'absolute',
-        right: 20,
-        bottom: 20,
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'white',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    addButtonText: {
-        fontSize: 28,
-        color: '#A78BFA',
+    carouselTitle: {
+        fontSize: 18,
         fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 16,
     },
+    cardCarouselContent: {
+        paddingRight: 20,
+    },
+    cardCarouselItem: {
+        width: CARD_WIDTH,
+        marginRight: 16,
+    },
+    miniCard: {
+        borderRadius: 16,
+        padding: 20,
+        minHeight: 180,
+        justifyContent: 'space-between',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    miniCardTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    miniCardType: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: 'white',
+        letterSpacing: 1,
+    },
+    miniDefaultBadge: {
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+        marginTop: 8,
+    },
+    miniDefaultText: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    miniCardNumber: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: 'white',
+        letterSpacing: 2,
+        marginTop: 16,
+    },
+    miniCardBottom: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 12,
+    },
+    miniCardName: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.9)',
+        flex: 1,
+        marginRight: 8,
+    },
+    miniCardExpiry: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    // Quick Actions
     section: {
         marginBottom: 24,
     },
@@ -224,109 +355,87 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 12,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: 'white',
-        marginBottom: 16,
+        marginBottom: 12,
+    },
+    viewAllContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    viewAll: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        marginRight: 4,
     },
     quickActions: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
+        paddingHorizontal: 10,
     },
     actionButton: {
-        width: '23%',
-        aspectRatio: 1,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 16,
-        justifyContent: 'center',
         alignItems: 'center',
+        width: 70,
     },
     actionIcon: {
-        fontSize: 24,
-        marginBottom: 8,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#A78BFA',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
     },
     actionText: {
         color: 'white',
-        fontSize: 12,
+        fontSize: 13,
+        fontWeight: '500',
     },
-    activityCard: {
+    // Transactions
+    transactionsList: {
+        gap: 12,
+    },
+    transactionItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 12,
+        padding: 12,
     },
-    activityLeft: {
+    transactionLeft: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    activityIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+    transactionIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: '#A78BFA',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
-    activityIconText: {
-        fontSize: 24,
-        color: 'white',
+    transactionIconText: {
+        fontSize: 20,
     },
-    activityTitle: {
+    transactionTitle: {
         color: 'white',
         fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 4,
+        fontWeight: '600',
+        marginBottom: 2,
     },
-    activitySubtitle: {
+    transactionSubtitle: {
         color: 'rgba(255,255,255,0.5)',
         fontSize: 12,
     },
-    activityAmount: {
+    transactionAmount: {
         color: '#4ADE80',
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    bottomNav: {
-        flexDirection: 'row',
-        backgroundColor: '#16192E',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
-    },
-    navItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    navItemCenter: {
-        flex: 1,
-        alignItems: 'center',
-        marginTop: -20,
-    },
-    navIcon: {
-        fontSize: 24,
-        marginBottom: 4,
-    },
-    navLabel: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 10,
-    },
-    scanButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#A78BFA',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    scanIcon: {
-        fontSize: 32,
-        color: 'white',
     },
 });
