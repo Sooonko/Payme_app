@@ -376,3 +376,95 @@ export const getTransactionHistory = async (): Promise<TransactionHistoryRespons
         throw error;
     }
 };
+
+// ============================================
+// CARD MANAGEMENT
+// ============================================
+
+export type CardType = 'VISA' | 'MASTERCARD' | 'AMEX' | 'DISCOVER' | 'UNKNOWN';
+
+export interface AddCardRequest {
+    cardHolderName: string;
+    cardNumberLast4: string;
+    cardType: CardType;
+    expiryMonth: number;
+    expiryYear: number;
+    cardToken: string;
+    isDefault?: boolean;
+}
+
+export interface AddCardResponse {
+    success: boolean;
+    message: string;
+    errorCode?: string;
+    data: {
+        id: string;
+        cardHolderName: string;
+        cardNumberLast4: string;
+        cardType: CardType;
+        expiryMonth: number;
+        expiryYear: number;
+        isDefault: boolean;
+        isVerified: boolean;
+        createdAt: string;
+    } | null;
+    timestamp: string;
+}
+
+export const addCard = async (data: AddCardRequest): Promise<AddCardResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/cards/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Add Card error:', error);
+        throw error;
+    }
+};
+
+export interface CardData {
+    id: string;
+    cardHolderName: string;
+    cardNumberLast4: string;
+    cardType: CardType;
+    expiryMonth: number;
+    expiryYear: number;
+    isDefault: boolean;
+    isVerified: boolean;
+    createdAt: string;
+}
+
+export interface GetCardsResponse {
+    success: boolean;
+    message: string;
+    data: CardData[];
+    timestamp: string;
+}
+
+export const getCards = async (): Promise<GetCardsResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/cards`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Get Cards error:', error);
+        throw error;
+    }
+};

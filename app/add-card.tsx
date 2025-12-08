@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { addCard } from '../src/api/client';
+import { detectCardType, generateMockCardToken, getCardLast4, validateCardNumber, validateExpiryDate } from '../src/utils/cardUtils';
 
 export default function AddCard() {
     const router = useRouter();
@@ -9,8 +11,9 @@ export default function AddCard() {
     const [cardholderName, setCardholderName] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const formatCardNumber = (text: string) => {
+    const formatCardNumberInput = (text: string) => {
         // Remove all non-digits
         const cleaned = text.replace(/\D/g, '');
         // Add space every 4 digits
@@ -28,30 +31,97 @@ export default function AddCard() {
         return cleaned;
     };
 
-    const handleAddCard = () => {
+    const handleAddCard = async () => {
+        // Clean card number
+        const cleanedCardNumber = cardNumber.replace(/\s/g, '');
+
         // Validation
-        if (!cardNumber || cardNumber.replace(/\s/g, '').length !== 16) {
-            Alert.alert('Invalid Card', 'Please enter a valid 16-digit card number.');
+        if (!cardNumber || cleanedCardNumber.length < 13) {
+            Alert.alert('Invalid Card', 'Please enter a valid card number.');
             return;
         }
-        if (!cardholderName) {
-            Alert.alert('Invalid Name', 'Please enter cardholder name.');
+
+        if (!validateCardNumber(cleanedCardNumber)) {
+            Alert.alert('Invalid Card', 'Card number failed validation check. Please verify the number.');
             return;
         }
+
+        if (!cardholderName || cardholderName.trim().length < 2) {
+            Alert.alert('Invalid Name', 'Please enter a valid cardholder name.');
+            return;
+        }
+
         if (!expiryDate || expiryDate.length !== 5) {
             Alert.alert('Invalid Expiry', 'Please enter expiry date (MM/YY).');
             return;
         }
+
+        // Parse expiry date
+        const [monthStr, yearStr] = expiryDate.split('/');
+        const expiryMonth = parseInt(monthStr, 10);
+        const expiryYear = 2000 + parseInt(yearStr, 10); // Convert YY to YYYY
+
+        if (!validateExpiryDate(expiryMonth, expiryYear)) {
+            Alert.alert('Invalid Expiry', 'Card has expired or expiry date is invalid.');
+            return;
+        }
+
         if (!cvv || cvv.length !== 3) {
             Alert.alert('Invalid CVV', 'Please enter 3-digit CVV.');
             return;
         }
 
-        // TODO: API integration to save card
-        Alert.alert('Success', 'Card added successfully!', [
-            { text: 'OK', onPress: () => router.push('/cards') }
-        ]);
+        setLoading(true);
+        try {
+            // Detect card type
+            const cardType = detectCardType(cleanedCardNumber);
+
+            if (cardType === 'UNKNOWN') {
+                Alert.alert('Unsupported Card', 'This card type is not supported.');
+                setLoading(false);
+                return;
+            }
+
+            // Generate mock token (TODO: Replace with real payment gateway)
+            const cardToken = generateMockCardToken(cleanedCardNumber);
+
+            // Get last 4 digits
+            const cardNumberLast4 = getCardLast4(cleanedCardNumber);
+
+            // Call API
+            const response = await addCard({
+                cardHolderName: cardholderName.trim(),
+                cardNumberLast4,
+                cardType,
+                expiryMonth,
+                expiryYear,
+                cardToken,
+                isDefault: false,
+            });
+
+            if (response.success) {
+                // Clear sensitive data from state
+                setCardNumber('');
+                setCardholderName('');
+                setExpiryDate('');
+                setCvv('');
+
+                Alert.alert('Success', 'Card added successfully!', [
+                    { text: 'OK', onPress: () => router.push('/cards') }
+                ]);
+            } else {
+                Alert.alert('Error', response.message || 'Failed to add card');
+            }
+        } catch (error) {
+            console.error('Add card error:', error);
+            Alert.alert('Error', 'Failed to connect to server. Please check your network connection.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // Get card type for display
+    const displayCardType = cardNumber ? detectCardType(cardNumber.replace(/\s/g, '')) : 'VISA';
 
     return (
         <View style={styles.container}>
@@ -72,7 +142,7 @@ export default function AddCard() {
                     <View style={styles.cardMockup}>
                         <View style={styles.cardTop}>
                             <Ionicons name="card" size={32} color="white" />
-                            <Text style={styles.cardType}>VISA</Text>
+                            <Text style={styles.cardType}>{displayCardType}</Text>
                         </View>
                         <Text style={styles.cardNumberPreview}>
                             {cardNumber || '•••• •••• •••• ••••'}
@@ -102,7 +172,7 @@ export default function AddCard() {
                     <Ionicons name="card-outline" size={20} color="#A78BFA" style={styles.inputIcon} />
                     <TextInput
                         value={cardNumber}
-                        onChangeText={(text) => setCardNumber(formatCardNumber(text))}
+                        onChangeText={(text) => setCardNumber(formatCardNumberInput(text))}
                         placeholder="Card Number"
                         placeholderTextColor="rgba(255,255,255,0.4)"
                         keyboardType="numeric"
@@ -157,14 +227,24 @@ export default function AddCard() {
                 <View style={styles.infoBox}>
                     <Ionicons name="shield-checkmark" size={20} color="#4ADE80" />
                     <Text style={styles.infoText}>
-                        Your card information is encrypted and securely stored.
+                        Your card information is encrypted and securely stored. We use tokenization to protect your data.
                     </Text>
                 </View>
 
                 {/* Add Card Button */}
-                <TouchableOpacity style={styles.addButton} onPress={handleAddCard}>
-                    <Text style={styles.addButtonText}>Add Card</Text>
-                    <Ionicons name="checkmark-circle" size={20} color="white" style={{ marginLeft: 8 }} />
+                <TouchableOpacity
+                    style={[styles.addButton, loading && styles.addButtonDisabled]}
+                    onPress={handleAddCard}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <Text style={styles.addButtonText}>Adding Card...</Text>
+                    ) : (
+                        <>
+                            <Text style={styles.addButtonText}>Add Card</Text>
+                            <Ionicons name="checkmark-circle" size={20} color="white" style={{ marginLeft: 8 }} />
+                        </>
+                    )}
                 </TouchableOpacity>
             </ScrollView>
         </View>
@@ -197,12 +277,11 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     cardMockup: {
-        backgroundColor: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+        backgroundColor: '#A78BFA',
         borderRadius: 20,
         padding: 24,
         minHeight: 200,
         justifyContent: 'space-between',
-        // Gradient simulation with overlay
         shadowColor: '#A78BFA',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
@@ -304,6 +383,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
+    },
+    addButtonDisabled: {
+        opacity: 0.6,
     },
     addButtonText: {
         color: 'white',
