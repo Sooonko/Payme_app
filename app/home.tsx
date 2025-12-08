@@ -124,7 +124,7 @@ export default function Home() {
                                 <Text style={styles.activityIconText}>₿</Text>
                             </View>
                             <View>
-                                <Text style={styles.activityTitle}>Bitcoin</Text>
+                                <Text style={styles.activityTitle}>SEEME</Text>
                                 <Text style={styles.activitySubtitle}>USD 48789.00</Text>
                             </View>
                         </View>

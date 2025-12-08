@@ -1,9 +1,13 @@
+// TODO: TOP UP API INTEGRATION
+// Currently using mock success for testing - see handleTopUp function (line ~32)
+// Remove mock and uncomment API calls when backend is ready
+
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SuccessModal from '../components/SuccessModal';
-import { confirmTopUp, initiateTopUp, TopUpResponse } from '../src/api/client';
+import { confirmTopUp, TopUpResponse } from '../src/api/client';
 
 export default function TopUp() {
     const router = useRouter();
@@ -25,18 +29,31 @@ export default function TopUp() {
 
     const handleTopUp = async () => {
         if (!amount || parseFloat(amount) <= 0) {
-            Alert.alert('Invalid Amount', 'Please enter a valid amount to top up.');
+            Alert.alert('Invalid Amount', 'Please enter a valid amount.');
             return;
         }
 
         setLoading(true);
         try {
+            // TODO: Fix API integration - temporarily mocking success
+            // Uncomment below when API is ready
+            /*
             const response = await initiateTopUp(parseFloat(amount));
+
             if (response.success) {
                 setTransaction(response.data);
             } else {
-                Alert.alert('Error', response.message || 'Failed to initiate top-up');
+                Alert.alert('Error', response.message || 'Top-up initiation failed');
             }
+            */
+
+            // TEMPORARY: Mock success for testing
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+            const mockAmount = parseFloat(amount);
+            setSuccessAmount(mockAmount);
+            setShowSuccessModal(true);
+            setAmount('');
+
         } catch (error) {
             Alert.alert('Error', 'Failed to connect to server');
         } finally {
