@@ -1,13 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, FlatList, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getTransactionHistory, TransactionHistoryResponse } from '../src/api/client';
+
+type FilterType = 'all' | 'income' | 'expense';
 
 export default function Activity() {
     const [transactions, setTransactions] = useState<TransactionHistoryResponse['data']>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [filter, setFilter] = useState<FilterType>('all');
+
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
 
     const loadTransactions = async () => {
         try {
@@ -30,6 +38,20 @@ export default function Activity() {
     useFocusEffect(
         useCallback(() => {
             loadTransactions();
+
+            // Start entrance animations
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }, [])
     );
 
@@ -48,44 +70,163 @@ export default function Activity() {
         });
     };
 
+    // Calculate statistics
+    const stats = transactions.reduce((acc, transaction) => {
+        if (transaction.flow === 'INFLOW') {
+            acc.income += transaction.amount;
+        } else {
+            acc.expense += transaction.amount;
+        }
+        return acc;
+    }, { income: 0, expense: 0 });
+
+    // Filter transactions
+    const filteredTransactions = transactions.filter(transaction => {
+        if (filter === 'all') return true;
+        if (filter === 'income') return transaction.flow === 'INFLOW';
+        if (filter === 'expense') return transaction.flow === 'OUTFLOW';
+        return true;
+    });
+
     const renderItem = ({ item }: { item: TransactionHistoryResponse['data'][0] }) => {
-        // Use the flow field from the API to determine if it's income or expense
         const isIncome = item.flow === 'INFLOW';
 
         return (
-            <View style={styles.transactionItem}>
-                <View style={styles.iconContainer}>
+            <Animated.View
+                style={[
+                    styles.transactionItem,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
+                <LinearGradient
+                    colors={isIncome ? ['rgba(74, 222, 128, 0.15)', 'rgba(74, 222, 128, 0.05)'] : ['rgba(248, 113, 113, 0.15)', 'rgba(248, 113, 113, 0.05)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.iconContainer}
+                >
                     <Ionicons
-                        name={isIncome ? "arrow-down-circle" : "arrow-up-circle"}
+                        name={isIncome ? "arrow-down" : "arrow-up"}
                         size={24}
                         color={isIncome ? "#4ADE80" : "#F87171"}
                     />
-                </View>
+                </LinearGradient>
                 <View style={styles.detailsContainer}>
                     <Text style={styles.description}>{item.description || item.type}</Text>
                     <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
                 </View>
-                <Text style={[styles.amount, { color: isIncome ? '#4ADE80' : 'white' }]}>
+                <Text style={[styles.amount, { color: isIncome ? '#4ADE80' : '#F87171' }]}>
                     {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
                 </Text>
-            </View>
+            </Animated.View>
         );
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
-            <View style={styles.header}>
+
+            {/* Header */}
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
                 <Text style={styles.headerTitle}>Activity</Text>
-            </View>
+            </Animated.View>
+
+            {/* Stats Card */}
+            <Animated.View
+                style={[
+                    styles.statsCard,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
+                <View style={styles.statItem}>
+                    <View style={styles.statIconContainer}>
+                        <LinearGradient
+                            colors={['#4ADE80', '#10B981']}
+                            style={styles.statIcon}
+                        >
+                            <Ionicons name="arrow-down" size={20} color="white" />
+                        </LinearGradient>
+                    </View>
+                    <View>
+                        <Text style={styles.statLabel}>Income</Text>
+                        <Text style={styles.statValue}>${stats.income.toFixed(2)}</Text>
+                    </View>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                    <View style={styles.statIconContainer}>
+                        <LinearGradient
+                            colors={['#F87171', '#EF4444']}
+                            style={styles.statIcon}
+                        >
+                            <Ionicons name="arrow-up" size={20} color="white" />
+                        </LinearGradient>
+                    </View>
+                    <View>
+                        <Text style={styles.statLabel}>Expense</Text>
+                        <Text style={styles.statValue}>${stats.expense.toFixed(2)}</Text>
+                    </View>
+                </View>
+            </Animated.View>
+
+            {/* Filter Chips */}
+            <Animated.View
+                style={[
+                    styles.filterContainer,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+                    onPress={() => setFilter('all')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.filterChip, filter === 'income' && styles.filterChipActive]}
+                    onPress={() => setFilter('income')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>Income</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.filterChip, filter === 'expense' && styles.filterChipActive]}
+                    onPress={() => setFilter('expense')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>Expense</Text>
+                </TouchableOpacity>
+            </Animated.View>
 
             {loading && !refreshing ? (
                 <View style={styles.center}>
-                    <ActivityIndicator color="#A78BFA" />
+                    <ActivityIndicator color="#A78BFA" size="large" />
                 </View>
             ) : (
                 <FlatList
-                    data={transactions}
+                    data={filteredTransactions}
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.listContent}
@@ -94,52 +235,125 @@ export default function Activity() {
                     }
                     ListEmptyComponent={
                         <View style={styles.center}>
+                            <Ionicons name="receipt-outline" size={64} color="rgba(255,255,255,0.3)" />
                             <Text style={styles.emptyText}>No transactions yet</Text>
                         </View>
                     }
                 />
             )}
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
     },
     header: {
         paddingTop: 60,
         paddingBottom: 20,
         paddingHorizontal: 20,
-        backgroundColor: '#1E2238',
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
     },
     headerTitle: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: 'bold',
+        color: 'white',
+    },
+    statsCard: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 24,
+        padding: 20,
+        marginHorizontal: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    statItem: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    statIconContainer: {
+        marginRight: 12,
+    },
+    statIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    statLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        marginBottom: 4,
+    },
+    statValue: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    statDivider: {
+        width: 1,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        marginHorizontal: 16,
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        marginBottom: 16,
+        gap: 12,
+    },
+    filterChip: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    filterChipActive: {
+        backgroundColor: '#A78BFA',
+        borderColor: '#A78BFA',
+    },
+    filterText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    filterTextActive: {
         color: 'white',
     },
     listContent: {
         padding: 20,
+        paddingBottom: 100,
     },
     transactionItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 20,
         marginBottom: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
     detailsContainer: {
         flex: 1,
@@ -152,10 +366,10 @@ const styles = StyleSheet.create({
     },
     date: {
         color: 'rgba(255,255,255,0.5)',
-        fontSize: 12,
+        fontSize: 13,
     },
     amount: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: 'bold',
     },
     center: {
@@ -167,5 +381,6 @@ const styles = StyleSheet.create({
     emptyText: {
         color: 'rgba(255,255,255,0.5)',
         fontSize: 16,
+        marginTop: 16,
     },
 });

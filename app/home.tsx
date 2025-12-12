@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardData, getCards, getWallet } from '../src/api/client';
 
 const { width } = Dimensions.get('window');
@@ -25,6 +26,10 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [cards, setCards] = useState<CardData[]>([]);
+
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
 
     const loadWallet = async () => {
         setLoading(true);
@@ -55,6 +60,20 @@ export default function Home() {
         useCallback(() => {
             loadWallet();
             loadCards();
+
+            // Start entrance animations
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }, [])
     );
 
@@ -66,22 +85,43 @@ export default function Home() {
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
 
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
                 <View>
                     <Text style={styles.greeting}>Hello, Jane Doe!</Text>
                 </View>
                 <TouchableOpacity style={styles.notificationIcon} onPress={() => router.push({ pathname: '/cards', params: { from: 'home' } })}>
                     <Ionicons name="card-outline" size={20} color="white" />
                 </TouchableOpacity>
-            </View>
+            </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Balance Card */}
-                <View style={styles.balanceCard}>
+                <Animated.View
+                    style={[
+                        styles.balanceCard,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }
+                    ]}
+                >
                     <View style={styles.balanceHeader}>
                         <Text style={styles.balanceLabel}>Total Balance</Text>
                         <TouchableOpacity
@@ -102,11 +142,19 @@ export default function Home() {
                             {balanceVisible ? `$${(balance || 0).toFixed(2)}` : '••••••'}
                         </Text>
                     )}
-                </View>
+                </Animated.View>
 
                 {/* Card Carousel */}
                 {cards.length > 0 && (
-                    <View style={styles.cardCarouselSection}>
+                    <Animated.View
+                        style={[
+                            styles.cardCarouselSection,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            }
+                        ]}
+                    >
                         <Text style={styles.carouselTitle}>My Cards</Text>
                         <ScrollView
                             horizontal
@@ -151,42 +199,70 @@ export default function Home() {
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
-                    </View>
+                    </Animated.View>
                 )}
 
                 {/* Quick Actions */}
-                <View style={styles.section}>
+                <Animated.View
+                    style={[
+                        styles.section,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }
+                    ]}
+                >
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
                     <View style={styles.quickActions}>
-                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/wallet')}>
-                            <View style={styles.actionIcon}>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/wallet')} activeOpacity={0.7}>
+                            <LinearGradient
+                                colors={['#A78BFA', '#8B5CF6']}
+                                style={styles.actionIcon}
+                            >
                                 <Ionicons name="paper-plane" size={24} color="white" />
-                            </View>
+                            </LinearGradient>
                             <Text style={styles.actionText} numberOfLines={1}>Send</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <View style={styles.actionIcon}>
+                        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+                            <LinearGradient
+                                colors={['#60A5FA', '#3B82F6']}
+                                style={styles.actionIcon}
+                            >
                                 <Ionicons name="download" size={24} color="white" />
-                            </View>
+                            </LinearGradient>
                             <Text style={styles.actionText} numberOfLines={1}>Receive</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/topup')}>
-                            <View style={styles.actionIcon}>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/topup')} activeOpacity={0.7}>
+                            <LinearGradient
+                                colors={['#34D399', '#10B981']}
+                                style={styles.actionIcon}
+                            >
                                 <Ionicons name="add-circle" size={24} color="white" />
-                            </View>
+                            </LinearGradient>
                             <Text style={styles.actionText} numberOfLines={1}>Top Up</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <View style={styles.actionIcon}>
+                        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+                            <LinearGradient
+                                colors={['#F59E0B', '#F59E0B']}
+                                style={styles.actionIcon}
+                            >
                                 <Ionicons name="cart" size={24} color="white" />
-                            </View>
+                            </LinearGradient>
                             <Text style={styles.actionText} numberOfLines={1}>Buy</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
+                </Animated.View>
 
                 {/* Recent Transactions */}
-                <View style={styles.section}>
+                <Animated.View
+                    style={[
+                        styles.section,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }
+                    ]}
+                >
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Recent Transactions</Text>
                         <TouchableOpacity
@@ -211,16 +287,15 @@ export default function Home() {
                             <Text style={styles.transactionAmount}>+$1,200</Text>
                         </View>
                     </View>
-                </View>
+                </Animated.View>
             </ScrollView>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
     },
     header: {
         flexDirection: 'row',
@@ -242,16 +317,24 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     content: {
         flex: 1,
         paddingHorizontal: 20,
     },
     balanceCard: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 20,
-        padding: 20,
-        marginBottom: 20,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 24,
+        padding: 24,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
     },
     balanceHeader: {
         flexDirection: 'row',
@@ -261,22 +344,25 @@ const styles = StyleSheet.create({
     },
     balanceLabel: {
         color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
+        fontSize: 16,
+        fontWeight: '500',
     },
     eyeButton: {
         padding: 4,
     },
     balanceAmount: {
-        fontSize: 36,
+        fontSize: 40,
         fontWeight: 'bold',
         color: 'white',
+        letterSpacing: 1,
+        marginTop: 4,
     },
     // Card Carousel Styles
     cardCarouselSection: {
-        marginBottom: 24,
+        marginBottom: 32,
     },
     carouselTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 16,
@@ -289,15 +375,15 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     miniCard: {
-        borderRadius: 16,
-        padding: 20,
+        borderRadius: 24,
+        padding: 24,
         minHeight: 180,
         justifyContent: 'space-between',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        shadowRadius: 16,
+        elevation: 8,
     },
     miniCardTop: {
         flexDirection: 'row',
@@ -309,32 +395,38 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         letterSpacing: 1,
+        opacity: 0.9,
     },
     miniDefaultBadge: {
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 12,
         alignSelf: 'flex-start',
-        marginTop: 8,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     miniDefaultText: {
-        fontSize: 11,
-        fontWeight: 'bold',
+        fontSize: 12,
+        fontWeight: '600',
         color: 'white',
     },
     miniCardNumber: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '600',
         color: 'white',
-        letterSpacing: 2,
-        marginTop: 16,
+        letterSpacing: 3,
+        marginTop: 24,
+        textShadowColor: 'rgba(0,0,0,0.1)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     miniCardBottom: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 12,
+        marginTop: 16,
     },
     miniCardName: {
         fontSize: 14,
@@ -342,100 +434,114 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.9)',
         flex: 1,
         marginRight: 8,
+        textTransform: 'uppercase',
     },
     miniCardExpiry: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.8)',
+        fontSize: 14,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.9)',
     },
     // Quick Actions
     section: {
-        marginBottom: 24,
+        marginBottom: 32,
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: 'white',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     viewAllContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     viewAll: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
+        color: 'white',
+        fontSize: 13,
+        fontWeight: '600',
         marginRight: 4,
     },
     quickActions: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingHorizontal: 10,
+        justifyContent: 'space-between',
     },
     actionButton: {
         alignItems: 'center',
-        width: 70,
+        width: 72,
     },
     actionIcon: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#A78BFA',
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     actionText: {
-        color: 'white',
+        color: 'rgba(255,255,255,0.9)',
         fontSize: 13,
         fontWeight: '500',
     },
     // Transactions
     transactionsList: {
-        gap: 12,
+        gap: 16,
     },
     transactionItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 12,
-        padding: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     transactionLeft: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     transactionIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#A78BFA',
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(167, 139, 250, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.3)',
     },
     transactionIconText: {
-        fontSize: 20,
+        fontSize: 24,
     },
     transactionTitle: {
         color: 'white',
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: '600',
-        marginBottom: 2,
+        marginBottom: 4,
     },
     transactionSubtitle: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 12,
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: 13,
     },
     transactionAmount: {
         color: '#4ADE80',
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: 'bold',
     },
 });

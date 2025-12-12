@@ -16,6 +16,46 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+/**
+ * Network-aware fetch wrapper
+ * Provides better error handling for network failures
+ */
+export class NetworkError extends Error {
+    constructor(message: string, public isNetworkError: boolean = true) {
+        super(message);
+        this.name = 'NetworkError';
+    }
+}
+
+export const fetchWithNetworkHandling = async (
+    url: string,
+    options?: RequestInit
+): Promise<Response> => {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error: any) {
+        // Check if it's a network error (no connection, timeout, etc.)
+        if (error.name === 'AbortError') {
+            throw new NetworkError('Хүсэлт хугацаа хэтэрсэн. Дахин оролдоно уу.');
+        }
+        if (error.message?.includes('Network request failed') ||
+            error.message?.includes('Failed to fetch')) {
+            throw new NetworkError('Сүлжээний холболт салсан байна.');
+        }
+        // Re-throw other errors
+        throw error;
+    }
+};
+
 export interface RegisterResponse {
     success: boolean;
     message: string;

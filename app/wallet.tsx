@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { sendMoney, UserSearchResponse } from '../src/api/client';
 
 export default function Wallet() {
@@ -12,10 +13,28 @@ export default function Wallet() {
     const [selectedUser, setSelectedUser] = useState<UserSearchResponse['data'][0] | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+
     const quickAmounts = ['10', '20', '50', '100'];
 
     useFocusEffect(
         useCallback(() => {
+            // Start entrance animations
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+
             // Only clear state if we're coming from a non-user-search navigation
             // (e.g., from home, bottom nav, etc.)
             const hasUserParams = params.userId && params.name && params.phone && params.walletId;
@@ -84,17 +103,38 @@ export default function Wallet() {
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
 
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
                 <Text style={styles.headerTitle}>Send Money</Text>
-            </View>
+            </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Amount Input Card */}
-                <View style={styles.amountCard}>
+                <Animated.View
+                    style={[
+                        styles.amountCard,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }
+                    ]}
+                >
                     <Text style={styles.amountLabel}>Enter Amount</Text>
                     <View style={styles.amountContainer}>
                         <Text style={styles.currencySymbol}>$</Text>
@@ -107,31 +147,44 @@ export default function Wallet() {
                             style={styles.amountInput}
                         />
                     </View>
-                </View>
+                </Animated.View>
 
                 {/* Quick Amounts */}
-                <Text style={styles.quickAmountLabel}>Quick Amount</Text>
-                <View style={styles.quickAmountsContainer}>
-                    {quickAmounts.map((amt) => (
-                        <TouchableOpacity
-                            key={amt}
-                            style={[
-                                styles.quickAmountChip,
-                                amount === amt && styles.quickAmountChipActive
-                            ]}
-                            onPress={() => setAmount(amt)}
-                        >
-                            <Text style={[
-                                styles.quickAmountText,
-                                amount === amt && styles.quickAmountTextActive
-                            ]}>${amt}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                <Animated.View
+                    style={{
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }}
+                >
+                    <Text style={styles.quickAmountLabel}>Quick Amount</Text>
+                    <View style={styles.quickAmountsContainer}>
+                        {quickAmounts.map((amt) => (
+                            <TouchableOpacity
+                                key={amt}
+                                style={[
+                                    styles.quickAmountChip,
+                                    amount === amt && styles.quickAmountChipActive
+                                ]}
+                                onPress={() => setAmount(amt)}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[
+                                    styles.quickAmountText,
+                                    amount === amt && styles.quickAmountTextActive
+                                ]}>${amt}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </Animated.View>
 
                 {/* Recipient Section */}
                 {selectedUser && (
-                    <>
+                    <Animated.View
+                        style={{
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }}
+                    >
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Send To</Text>
                             <TouchableOpacity onPress={() => setSelectedUser(null)}>
@@ -155,31 +208,46 @@ export default function Wallet() {
                                 <Ionicons name="checkmark" size={16} color="white" />
                             </View>
                         </View>
-                    </>
+                    </Animated.View>
                 )}
 
                 {/* Transfer Button */}
-                <TouchableOpacity
-                    style={styles.confirmButton}
-                    onPress={handleTransfer}
-                    disabled={loading}
+                <Animated.View
+                    style={{
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }}
                 >
-                    {loading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <>
-                            <Text style={styles.confirmButtonText}>
-                                {selectedUser ? 'Confirm Transfer' : 'Select Recipient'}
-                            </Text>
-                            <Ionicons
-                                name={selectedUser ? "paper-plane" : "arrow-forward"}
-                                size={20}
-                                color="white"
-                                style={{ marginLeft: 8 }}
-                            />
-                        </>
-                    )}
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.confirmButton}
+                        onPress={handleTransfer}
+                        disabled={loading}
+                        activeOpacity={0.9}
+                    >
+                        <LinearGradient
+                            colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.confirmButtonGradient}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <>
+                                    <Text style={styles.confirmButtonText}>
+                                        {selectedUser ? 'Confirm Transfer' : 'Select Recipient'}
+                                    </Text>
+                                    <Ionicons
+                                        name={selectedUser ? "paper-plane" : "arrow-forward"}
+                                        size={20}
+                                        color="white"
+                                        style={{ marginLeft: 8 }}
+                                    />
+                                </>
+                            )}
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </Animated.View>
             </ScrollView>
 
             {/* Success Modal */}
@@ -209,14 +277,13 @@ export default function Wallet() {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
     },
     header: {
         flexDirection: 'row',
@@ -226,12 +293,8 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 20,
     },
-    backButton: {
-        fontSize: 28,
-        color: 'white',
-    },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
     },
@@ -240,17 +303,22 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     amountCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         borderRadius: 24,
-        padding: 24,
+        padding: 32,
         marginTop: 20,
-        marginBottom: 24,
+        marginBottom: 32,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        alignItems: 'center',
     },
     amountLabel: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 16,
+        color: 'rgba(255, 255, 255, 0.7)',
         marginBottom: 16,
         fontWeight: '600',
         textTransform: 'uppercase',
@@ -262,22 +330,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     currencySymbol: {
-        fontSize: 36,
+        fontSize: 40,
         color: '#A78BFA',
         fontWeight: 'bold',
         marginRight: 8,
     },
     amountInput: {
-        fontSize: 44,
+        fontSize: 48,
         color: 'white',
         fontWeight: 'bold',
         minWidth: 120,
         textAlign: 'center',
     },
     quickAmountLabel: {
-        fontSize: 13,
-        color: 'rgba(255, 255, 255, 0.5)',
-        marginBottom: 12,
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.6)',
+        marginBottom: 16,
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -285,27 +353,26 @@ const styles = StyleSheet.create({
     quickAmountsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 28,
-        gap: 8,
+        marginBottom: 32,
+        gap: 12,
     },
     quickAmountChip: {
         flex: 1,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         paddingVertical: 14,
-        paddingHorizontal: 16,
         borderRadius: 16,
-        borderWidth: 2,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         alignItems: 'center',
     },
     quickAmountChipActive: {
-        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        backgroundColor: 'rgba(167, 139, 250, 0.2)',
         borderColor: '#A78BFA',
     },
     quickAmountText: {
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: 'rgba(255, 255, 255, 0.8)',
         fontWeight: '600',
-        fontSize: 15,
+        fontSize: 16,
     },
     quickAmountTextActive: {
         color: '#A78BFA',
@@ -315,10 +382,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
         color: 'white',
     },
@@ -331,12 +398,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 20,
-        padding: 16,
+        padding: 20,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     methodLeft: {
         flexDirection: 'row',
@@ -344,17 +411,19 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     recipientAvatar: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         backgroundColor: '#A78BFA',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
+        marginRight: 16,
+        borderWidth: 2,
+        borderColor: 'rgba(167, 139, 250, 0.3)',
     },
     avatarText: {
         color: 'white',
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
     },
     recipientInfo: {
@@ -362,9 +431,9 @@ const styles = StyleSheet.create({
     },
     recipientName: {
         color: 'white',
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 6,
+        marginBottom: 4,
     },
     phoneRow: {
         flexDirection: 'row',
@@ -376,29 +445,31 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     checkmarkBadge: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: '#A78BFA',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#4ADE80',
         justifyContent: 'center',
         alignItems: 'center',
     },
     confirmButton: {
-        flexDirection: 'row',
-        backgroundColor: '#A78BFA',
         borderRadius: 25,
-        paddingVertical: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
         marginBottom: 32,
         shadowColor: '#A78BFA',
         shadowOffset: {
             width: 0,
-            height: 6,
+            height: 8,
         },
         shadowOpacity: 0.4,
-        shadowRadius: 10,
+        shadowRadius: 16,
         elevation: 8,
+    },
+    confirmButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+        borderRadius: 25,
     },
     confirmButtonText: {
         color: 'white',
@@ -407,44 +478,58 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#1E2238',
-        borderRadius: 24,
+        backgroundColor: '#1E2238', // Fallback
+        borderRadius: 32,
         padding: 40,
         alignItems: 'center',
         width: '85%',
         borderWidth: 1,
         borderColor: 'rgba(167, 139, 250, 0.3)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
+        elevation: 10,
     },
     successIcon: {
         marginBottom: 24,
+        shadowColor: '#4ADE80',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
     },
     successTitle: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 16,
+        textAlign: 'center',
     },
     successAmount: {
-        fontSize: 36,
+        fontSize: 40,
         fontWeight: 'bold',
         color: '#4ADE80',
         marginBottom: 8,
     },
     successRecipient: {
-        fontSize: 16,
+        fontSize: 18,
         color: 'rgba(255,255,255,0.7)',
         marginBottom: 32,
     },
     doneButton: {
         backgroundColor: '#A78BFA',
-        borderRadius: 16,
+        borderRadius: 20,
         paddingVertical: 16,
         paddingHorizontal: 60,
+        shadowColor: '#A78BFA',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
     },
     doneButtonText: {
         color: 'white',

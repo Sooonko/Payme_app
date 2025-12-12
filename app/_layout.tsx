@@ -7,156 +7,175 @@ import 'react-native-reanimated';
 import "../global.css";
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { NetworkAlert } from '@/src/components/NetworkAlert';
+import { NetworkProvider } from '@/src/contexts/NetworkContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: '#A78BFA',
-          tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
-          tabBarStyle: {
-            backgroundColor: '#16192E',
-            borderTopWidth: 1,
-            borderTopColor: 'rgba(255,255,255,0.05)',
-            height: 70,
-            paddingBottom: 10,
-          },
-          tabBarLabelStyle: {
-            fontSize: 10,
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
-            ),
+    <NetworkProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <NetworkAlert />
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: '#A78BFA',
+            tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+            tabBarStyle: {
+              backgroundColor: 'rgba(22, 25, 46, 0.9)',
+              position: 'absolute',
+              bottom: 25,
+              left: 20,
+              right: 20,
+              borderRadius: 35,
+              height: 70,
+              paddingBottom: 10,
+              borderTopWidth: 0,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.25,
+              shadowRadius: 10,
+              elevation: 5,
+            },
+            tabBarLabelStyle: {
+              fontSize: 10,
+            },
           }}
-        />
-        <Tabs.Screen
-          name="wallet"
-          options={{
-            title: 'Wallet',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="wallet" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="scan"
-          options={{
-            title: '',
-            tabBarIcon: () => (
-              <View style={{
-                backgroundColor: '#A78BFA',
-                borderRadius: 28,
-                width: 56,
-                height: 56,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 20,
-              }}>
-                <Ionicons name="scan" size={28} color="white" />
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="activity"
-          options={{
-            title: 'Activity',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="bar-chart" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
-            ),
-          }}
-        />
+        >
+          <Tabs.Screen
+            name="home"
+            options={{
+              title: 'Home',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="wallet"
+            options={{
+              title: 'Wallet',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="wallet" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="scan"
+            options={{
+              title: '',
+              tabBarIcon: () => (
+                <View style={{
+                  backgroundColor: '#A78BFA',
+                  borderRadius: 28,
+                  width: 56,
+                  height: 56,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                  shadowColor: '#A78BFA',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}>
+                  <Ionicons name="scan" size={28} color="white" />
+                </View>
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="activity"
+            options={{
+              title: 'Activity',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="bar-chart" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: 'Profile',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="person" size={size} color={color} />
+              ),
+            }}
+          />
 
-        {/* Hidden screens - no tab bar shown */}
-        <Tabs.Screen
-          name="topup"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="index"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="login"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="register"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="user-search"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="send-money"
-          options={{
-            href: null,
-          }}
-        />
-        <Tabs.Screen
-          name="modal"
-          options={{
-            href: null,
-          }}
-        />
-        <Tabs.Screen
-          name="edit-profile"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="cards"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-        <Tabs.Screen
-          name="add-card"
-          options={{
-            href: null,
-            tabBarStyle: { display: 'none' },
-          }}
-        />
-      </Tabs>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+          {/* Hidden screens - no tab bar shown */}
+          <Tabs.Screen
+            name="topup"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="index"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="login"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="register"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="user-search"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="send-money"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="modal"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="edit-profile"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="cards"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="add-card"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+        </Tabs>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </NetworkProvider>
   );
 }
