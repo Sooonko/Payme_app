@@ -135,8 +135,6 @@ export default function Activity() {
             style={styles.container}
         >
             <StatusBar barStyle="light-content" />
-
-            {/* Header */}
             <Animated.View
                 style={[
                     styles.header,
@@ -154,10 +152,8 @@ export default function Activity() {
                     <Ionicons name="chevron-back" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('activity.title')}</Text>
-                <View style={{ width: 44 }} /> {/* Spacer for centering if needed, but flex-start is better here */}
+                <View style={{ width: 44 }} />
             </Animated.View>
-
-            {/* Stats Card */}
             <Animated.View
                 style={[
                     styles.statsCard,
@@ -178,7 +174,7 @@ export default function Activity() {
                     </View>
                     <View>
                         <Text style={styles.statLabel}>{t('activity.income')}</Text>
-                        <Text style={styles.statValue}>₮{stats.income.toFixed(2)}</Text>
+                        <Text style={styles.statValue}>{`₮${stats.income.toFixed(2)}`}</Text>
                     </View>
                 </View>
                 <View style={styles.statDivider} />
@@ -193,12 +189,10 @@ export default function Activity() {
                     </View>
                     <View>
                         <Text style={styles.statLabel}>{t('activity.expense')}</Text>
-                        <Text style={styles.statValue}>₮{stats.expense.toFixed(2)}</Text>
+                        <Text style={styles.statValue}>{`₮${stats.expense.toFixed(2)}`}</Text>
                     </View>
                 </View>
             </Animated.View>
-
-            {/* Filter Chips */}
             <Animated.View
                 style={[
                     styles.filterContainer,
@@ -230,7 +224,6 @@ export default function Activity() {
                     <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>{t('activity.expense')}</Text>
                 </TouchableOpacity>
             </Animated.View>
-
             {loading && !refreshing ? (
                 <View style={styles.center}>
                     <ActivityIndicator color="#A78BFA" size="large" />

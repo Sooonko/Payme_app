@@ -29,31 +29,31 @@ export default function RootLayout() {
             tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
             tabBarBackground: () => (
               <BlurView
-                intensity={10}
+                intensity={20}
                 tint="light"
                 style={{
                   ...StyleSheet.absoluteFillObject,
+                  left: 20,
+                  right: 20,
+                  bottom: 10,
                   borderRadius: 30,
                   overflow: 'hidden',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderWidth: 1.2,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
                 }}
               />
             ),
             tabBarStyle: {
               backgroundColor: 'transparent',
               position: 'absolute',
-              bottom: 20,
-              left: 0,
-              right: 30,
-              borderRadius: 40,
+              bottom: 25,
+              left: 20,
+              right: 20,
+              borderRadius: 30,
               height: 70,
               borderTopWidth: 0,
-              borderWidth: 0.3,
-              borderColor: 'rgba(255, 255, 255, 0.15)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.1,
-              shadowRadius: 20,
+              borderWidth: 0,
               elevation: 0,
             },
           }}
@@ -101,6 +101,7 @@ export default function RootLayout() {
             options={{
               title: 'Activity',
               href: null, // Hide from bottom bar
+              tabBarStyle: { display: 'none' },
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
                   <Ionicons name="stats-chart-outline" size={24} color={color} />
