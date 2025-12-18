@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
@@ -83,7 +84,11 @@ export default function Home() {
 
             {/* Header */}
             <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-                <Text style={styles.brandLogo}>PAYME</Text>
+                <Image
+                    source={require('../assets/logo/Payme-Logo.svg')}
+                    style={styles.brandLogoImage}
+                    contentFit="contain"
+                />
                 <View style={styles.headerActions}>
                     <TouchableOpacity style={styles.roundAction} onPress={() => router.push('/activity')}>
                         <Ionicons name="time-outline" size={22} color="white" />
@@ -168,11 +173,9 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 15,
     },
-    brandLogo: {
-        fontSize: 26,
-        fontWeight: '900',
-        color: 'white',
-        letterSpacing: 1,
+    brandLogoImage: {
+        width: 120,
+        height: 30,
     },
     headerActions: {
         flexDirection: 'row',

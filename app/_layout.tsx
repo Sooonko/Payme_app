@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
@@ -29,10 +30,10 @@ export default function RootLayout() {
               backgroundColor: 'rgba(255, 255, 255, 0.08)', // More glass-like
               position: 'absolute',
               bottom: 25,
-              left: 60,
-              right: 60,
-              borderRadius: 30,
-              height: 75,
+              left: 85,
+              right: 85,
+              borderRadius: 35,
+              height: 70,
               borderTopWidth: 1,
               borderColor: 'rgba(255, 255, 255, 0.1)',
               shadowColor: '#000',
@@ -67,7 +68,7 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="scan"
+            name="quickpay"
             options={{
               title: '',
               tabBarIcon: () => (
@@ -78,7 +79,7 @@ export default function RootLayout() {
                   height: 60,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginBottom: 35, // Lifted center button
+                  marginBottom: 20, // Lowered center button for better touch area
                   shadowColor: '#6366F1',
                   shadowOffset: { width: 0, height: 8 },
                   shadowOpacity: 0.4,
@@ -87,7 +88,11 @@ export default function RootLayout() {
                   borderWidth: 4,
                   borderColor: 'rgba(255,255,255,0.1)',
                 }}>
-                  <Ionicons name="qr-code-outline" size={30} color="white" />
+                  <Image
+                    source={require('../assets/logo/mainIcon.svg')}
+                    style={{ width: 32, height: 32, tintColor: 'white' }}
+                    contentFit="contain"
+                  />
                 </View>
               ),
             }}
@@ -140,6 +145,13 @@ export default function RootLayout() {
           />
           <Tabs.Screen
             name="register"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
+          <Tabs.Screen
+            name="scan"
             options={{
               href: null,
               tabBarStyle: { display: 'none' },
