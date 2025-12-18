@@ -155,9 +155,18 @@ export default function Home() {
                                         <Text style={styles.cardLabel}>CARD HOLDER</Text>
                                         <Text style={styles.cardHolderName}>JONSON</Text>
                                     </View>
-                                    <View style={styles.mastercardLogo}>
-                                        <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.4)', left: 0 }]} />
-                                        <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.6)', left: 12 }]} />
+                                    <View style={styles.cardFooterRight}>
+                                        <TouchableOpacity
+                                            style={styles.cardTopUpBtn}
+                                            onPress={() => router.push('/topup')}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="add-circle" size={28} color="white" />
+                                        </TouchableOpacity>
+                                        <View style={styles.mastercardLogo}>
+                                            <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.4)', left: 0 }]} />
+                                            <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.6)', left: 12 }]} />
+                                        </View>
                                     </View>
                                 </View>
                             </BlurView>
@@ -337,6 +346,14 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    cardFooterRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    cardTopUpBtn: {
+        opacity: 0.9,
     },
     mastercardLogo: {
         width: 32,
