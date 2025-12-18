@@ -87,7 +87,9 @@
     },
     "home": {
         "greeting": "Hello, Jane Doe!",
+        "totalBalance": "TOTAL BALANCE",
         "balance": "Total Balance",
+        "services": "Services",
         "myCards": "My Cards",
         "default": "Default",
         "quickActions": "Quick Actions",

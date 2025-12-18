@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,23 +25,36 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             tabBarShowLabel: false,
-            tabBarActiveTintColor: '#A78BFA',
-            tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
+            tabBarActiveTintColor: '#FFFFFF',
+            tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+            tabBarBackground: () => (
+              <BlurView
+                intensity={10}
+                tint="light"
+                style={{
+                  ...StyleSheet.absoluteFillObject,
+                  borderRadius: 30,
+                  overflow: 'hidden',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                }}
+              />
+            ),
             tabBarStyle: {
-              backgroundColor: 'rgba(255, 255, 255, 0.08)', // More glass-like
+              backgroundColor: 'transparent',
               position: 'absolute',
-              bottom: 25,
-              left: 85,
-              right: 85,
-              borderRadius: 35,
+              bottom: 20,
+              left: 0,
+              right: 30,
+              borderRadius: 40,
               height: 70,
-              borderTopWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.1)',
+              borderTopWidth: 0,
+              borderWidth: 0.3,
+              borderColor: 'rgba(255, 255, 255, 0.15)',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.3,
+              shadowOpacity: 0.1,
               shadowRadius: 20,
-              elevation: 5,
+              elevation: 0,
             },
           }}
         >
@@ -50,7 +64,7 @@ export default function RootLayout() {
               title: 'Home',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="home" size={24} color={color} />
+                  <Ionicons name="home" size={22} color={color} />
                 </View>
               ),
             }}
@@ -68,29 +82,14 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="quickpay"
+            name="scan"
             options={{
               title: '',
-              tabBarIcon: () => (
-                <View style={{
-                  backgroundColor: '#6366F1',
-                  borderRadius: 22,
-                  width: 60,
-                  height: 60,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: 20, // Lowered center button for better touch area
-                  shadowColor: '#6366F1',
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.4,
-                  shadowRadius: 12,
-                  elevation: 8,
-                  borderWidth: 4,
-                  borderColor: 'rgba(255,255,255,0.1)',
-                }}>
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
                   <Image
                     source={require('../assets/logo/mainIcon.svg')}
-                    style={{ width: 32, height: 32, tintColor: 'white' }}
+                    style={{ width: 24, height: 24, tintColor: color }}
                     contentFit="contain"
                   />
                 </View>
@@ -115,12 +114,11 @@ export default function RootLayout() {
               title: 'Profile',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="person-outline" size={24} color={color} />
+                  <Ionicons name="person-outline" size={22} color={color} />
                 </View>
               ),
             }}
           />
-
           {/* Hidden screens - no tab bar shown */}
           <Tabs.Screen
             name="topup"
@@ -145,13 +143,6 @@ export default function RootLayout() {
           />
           <Tabs.Screen
             name="register"
-            options={{
-              href: null,
-              tabBarStyle: { display: 'none' },
-            }}
-          />
-          <Tabs.Screen
-            name="scan"
             options={{
               href: null,
               tabBarStyle: { display: 'none' },
@@ -210,10 +201,11 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 22,
+    marginTop: 26,
   },
   activeIconContainer: {
-    backgroundColor: 'rgba(167, 139, 250, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });
 
