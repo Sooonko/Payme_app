@@ -3,10 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Modal, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { loginUser } from '../src/api/client';
 
 export default function Login() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -196,15 +198,15 @@ export default function Login() {
         let hasError = false;
 
         if (!email) {
-            newErrors.email = 'Email is required';
+            newErrors.email = t('login.errors.emailRequired');
             hasError = true;
         } else if (!validateEmail(email)) {
-            newErrors.email = 'Please enter a valid email address';
+            newErrors.email = t('login.errors.emailInvalid');
             hasError = true;
         }
 
         if (!password) {
-            newErrors.password = 'Password is required';
+            newErrors.password = t('login.errors.passwordRequired');
             hasError = true;
         }
 
@@ -226,12 +228,12 @@ export default function Login() {
                 // In a real app, you would store the token here
                 router.push('/home');
             } else {
-                setErrorMessage(response.message || 'Invalid credentials');
+                setErrorMessage(response.message || t('login.errors.credentials'));
                 setShowErrorModal(true);
             }
         } catch (error) {
             console.error('Login error details:', error);
-            setErrorMessage('Failed to connect to server. Please check your internet connection.');
+            setErrorMessage(t('login.errors.network'));
             setShowErrorModal(true);
         } finally {
             setLoading(false);
@@ -279,8 +281,8 @@ export default function Login() {
                                 <Ionicons name="lock-closed" size={48} color="#A78BFA" />
                             </Animated.View>
                         </Animated.View>
-                        <Text style={styles.title}>Welcome Back!</Text>
-                        <Text style={styles.subtitle}>Sign in to continue</Text>
+                        <Text style={styles.title}>{t('login.welcome')}</Text>
+                        <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
                     </View>
 
                     {/* Form Container */}
@@ -312,7 +314,7 @@ export default function Login() {
                                     },
                                 ]}
                             >
-                                Email
+                                {t('login.email')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -328,7 +330,7 @@ export default function Login() {
                                     }}
                                     onFocus={handleEmailFocus}
                                     onBlur={handleEmailBlur}
-                                    placeholder={!emailFocused ? "Email" : ""}
+                                    placeholder={!emailFocused ? t('login.email') : ""}
                                     placeholderTextColor="#8F92A1"
                                     keyboardType="email-address"
                                     autoCapitalize="none"
@@ -365,7 +367,7 @@ export default function Login() {
                                     },
                                 ]}
                             >
-                                Password
+                                {t('login.password')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -381,7 +383,7 @@ export default function Login() {
                                     }}
                                     onFocus={handlePasswordFocus}
                                     onBlur={handlePasswordBlur}
-                                    placeholder={!passwordFocused ? "Password" : ""}
+                                    placeholder={!passwordFocused ? t('login.password') : ""}
                                     placeholderTextColor="#8F92A1"
                                     secureTextEntry={!showPassword}
                                     autoCapitalize="none"
@@ -436,7 +438,7 @@ export default function Login() {
                                         <ActivityIndicator color="white" />
                                     ) : (
                                         <>
-                                            <Text style={styles.loginButtonText}>Log In</Text>
+                                            <Text style={styles.loginButtonText}>{t('login.button')}</Text>
                                             <Ionicons name="arrow-forward" size={20} color="white" style={styles.buttonIcon} />
                                         </>
                                     )}
@@ -446,7 +448,7 @@ export default function Login() {
 
                         {/* Sign Up Link */}
                         <Text style={styles.signupText}>
-                            Don't have an account? <Text style={styles.signupLink} onPress={() => router.push('/register')}>Sign up</Text>
+                            {t('login.noAccount')} <Text style={styles.signupLink} onPress={() => router.push('/register')}>{t('login.signup')}</Text>
                         </Text>
                     </View>
                 </View>
@@ -463,13 +465,13 @@ export default function Login() {
                         <View style={styles.errorIcon}>
                             <Ionicons name="close-circle" size={80} color="#FF4B4B" />
                         </View>
-                        <Text style={styles.errorTitle}>Login Failed</Text>
+                        <Text style={styles.errorTitle}>{t('login.errors.failed')}</Text>
                         <Text style={styles.errorMessage}>{errorMessage}</Text>
                         <TouchableOpacity
                             style={styles.closeButton}
                             onPress={() => setShowErrorModal(false)}
                         >
-                            <Text style={styles.closeButtonText}>Try Again</Text>
+                            <Text style={styles.closeButtonText}>{t('login.errors.tryAgain')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

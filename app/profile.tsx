@@ -3,13 +3,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUserProfile, UserProfileResponse } from '../src/api/client';
 
 export default function Profile() {
+    const { t, i18n } = useTranslation();
     const router = useRouter();
     const [user, setUser] = useState<UserProfileResponse['data'] | null>(null);
     const [loading, setLoading] = useState(true);
+    const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -57,10 +60,16 @@ export default function Profile() {
 
     const formatMemberSince = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric'
-        });
+        return t('profile.memberSince', { date: date.toLocaleDateString() });
+    };
+
+    const changeLanguage = async (lang: string) => {
+        try {
+            await i18n.changeLanguage(lang);
+            setLanguageModalVisible(false);
+        } catch (error) {
+            console.error('Failed to change language', error);
+        }
     };
 
     return (
@@ -82,7 +91,8 @@ export default function Profile() {
                     }
                 ]}
             >
-                <Text style={styles.headerTitle}>Profile</Text>
+
+                <Text style={styles.headerTitle}>{t('profile.title')}</Text>
             </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -126,14 +136,14 @@ export default function Profile() {
                         <ActivityIndicator color="#A78BFA" style={{ marginTop: 16 }} />
                     ) : (
                         <>
-                            <Text style={styles.name}>{user ? user.name : 'Guest'}</Text>
+                            <Text style={styles.name}>{user ? user.name : t('profile.guest')}</Text>
                             <Text style={styles.email}>{user ? user.phone : ''}</Text>
                             {user?.email && <Text style={styles.emailSecondary}>{user.email}</Text>}
                             {user?.createdAt && (
                                 <View style={styles.memberSince}>
                                     <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.5)" />
                                     <Text style={styles.memberSinceText}>
-                                        Member since {formatMemberSince(user.createdAt)}
+                                        {formatMemberSince(user.createdAt)}
                                     </Text>
                                 </View>
                             )}
@@ -170,7 +180,7 @@ export default function Profile() {
                             >
                                 <Ionicons name="person-outline" size={20} color="white" />
                             </LinearGradient>
-                            <Text style={styles.menuText}>Edit Profile</Text>
+                            <Text style={styles.menuText}>{t('profile.editProfile')}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
@@ -186,7 +196,7 @@ export default function Profile() {
                             >
                                 <Ionicons name="shield-checkmark-outline" size={20} color="white" />
                             </LinearGradient>
-                            <Text style={styles.menuText}>Security</Text>
+                            <Text style={styles.menuText}>{t('profile.security')}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
@@ -203,7 +213,7 @@ export default function Profile() {
                             >
                                 <Ionicons name="card-outline" size={20} color="white" />
                             </LinearGradient>
-                            <Text style={styles.menuText}>My Cards</Text>
+                            <Text style={styles.menuText}>{t('profile.myCards')}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
@@ -219,7 +229,7 @@ export default function Profile() {
                             >
                                 <Ionicons name="help-circle-outline" size={20} color="white" />
                             </LinearGradient>
-                            <Text style={styles.menuText}>Help & Support</Text>
+                            <Text style={styles.menuText}>{t('profile.helpSupport')}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
                     </TouchableOpacity>
@@ -235,9 +245,31 @@ export default function Profile() {
                             >
                                 <Ionicons name="settings-outline" size={20} color="white" />
                             </LinearGradient>
-                            <Text style={styles.menuText}>Settings</Text>
+                            <Text style={styles.menuText}>{t('profile.settings')}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => setLanguageModalVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.menuLeft}>
+                            <LinearGradient
+                                colors={['#8B5CF6', '#7C3AED']}
+                                style={styles.menuIconGradient}
+                            >
+                                <Ionicons name="language-outline" size={20} color="white" />
+                            </LinearGradient>
+                            <Text style={styles.menuText}>{t('profile.language')}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.5)', marginRight: 8 }}>
+                                {i18n.language === 'mn' ? 'Монгол' : 'English'}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                        </View>
                     </TouchableOpacity>
                 </Animated.View>
 
@@ -256,13 +288,41 @@ export default function Profile() {
                             style={styles.logoutGradient}
                         >
                             <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                            <Text style={styles.logoutText}>Log Out</Text>
+                            <Text style={styles.logoutText}>{t('profile.logout')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </Animated.View>
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={languageModalVisible}
+                onRequestClose={() => setLanguageModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>{t('profile.selectLanguage')}</Text>
+                            <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
+                                <Ionicons name="close" size={24} color="white" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity style={styles.languageOption} onPress={() => changeLanguage('en')}>
+                            <Text style={[styles.languageText, i18n.language === 'en' && styles.activeLanguageText]}>English</Text>
+                            {i18n.language === 'en' && <Ionicons name="checkmark" size={24} color="#A78BFA" />}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.languageOption} onPress={() => changeLanguage('mn')}>
+                            <Text style={[styles.languageText, i18n.language === 'mn' && styles.activeLanguageText]}>Монгол</Text>
+                            {i18n.language === 'mn' && <Ionicons name="checkmark" size={24} color="#A78BFA" />}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </LinearGradient>
     );
 }
@@ -413,6 +473,47 @@ const styles = StyleSheet.create({
     logoutText: {
         color: '#FF3B30',
         fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#1E1B4B',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        paddingBottom: 40,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    languageOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+    },
+    languageText: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    activeLanguageText: {
+        color: '#A78BFA',
         fontWeight: 'bold',
     },
 });

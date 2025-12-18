@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function Index() {
+    const { t } = useTranslation();
     const router = useRouter();
+    const [activeIndex, setActiveIndex] = useState(0);
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(50)).current;
-    const scaleAnim = useRef(new Animated.Value(0.9)).current;
+    const slideInAnim = useRef(new Animated.Value(50)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -20,18 +22,12 @@ export default function Index() {
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 800,
+                duration: 1000,
                 useNativeDriver: true,
             }),
-            Animated.timing(slideAnim, {
+            Animated.timing(slideInAnim, {
                 toValue: 0,
-                duration: 800,
-                useNativeDriver: true,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                friction: 8,
-                tension: 40,
+                duration: 1000,
                 useNativeDriver: true,
             }),
         ]).start();
@@ -41,38 +37,49 @@ export default function Index() {
             Animated.sequence([
                 Animated.timing(pulseAnim, {
                     toValue: 1.05,
-                    duration: 1000,
+                    duration: 1200,
                     useNativeDriver: true,
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
-                    duration: 1000,
+                    duration: 1200,
                     useNativeDriver: true,
                 }),
             ])
         ).start();
     }, []);
 
-    const features = [
+    const slides = [
         {
             icon: 'flash',
-            title: 'Fast Transfers',
-            description: 'Instant money transfers',
+            title: t('landing.features.fastTransfer.title'),
+            description: t('landing.features.fastTransfer.desc'),
             color: '#A78BFA',
+            tagline: t('landing.tagline'),
         },
         {
             icon: 'shield-checkmark',
-            title: 'Secure Payments',
-            description: 'Bank-level security',
+            title: t('landing.features.securePayment.title'),
+            description: t('landing.features.securePayment.desc'),
             color: '#60A5FA',
+            tagline: t('landing.tagline'),
         },
         {
             icon: 'wallet',
-            title: 'Easy Top-up',
-            description: 'Multiple payment options',
+            title: t('landing.features.easyTopUp.title'),
+            description: t('landing.features.easyTopUp.desc'),
             color: '#34D399',
+            tagline: t('landing.tagline'),
         },
     ];
+
+    const handleScroll = (event: any) => {
+        const scrollOffset = event.nativeEvent.contentOffset.x;
+        const index = Math.round(scrollOffset / width);
+        if (index !== activeIndex) {
+            setActiveIndex(index);
+        }
+    };
 
     return (
         <LinearGradient
@@ -83,73 +90,88 @@ export default function Index() {
         >
             <StatusBar barStyle="light-content" />
 
-            {/* Animated Header */}
-            <Animated.View
-                style={[
-                    styles.header,
-                    {
-                        opacity: fadeAnim,
-                        transform: [{ translateY: slideAnim }],
-                    }
-                ]}
-            >
+            {/* Logo/Header */}
+            <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
                 <View style={styles.logoContainer}>
-                    <Ionicons name="card" size={48} color="#A78BFA" />
+                    <Ionicons name="card" size={32} color="#A78BFA" />
                 </View>
-                <Text style={styles.title}>PAYME</Text>
-                <Text style={styles.subtitle}>Your Digital Wallet</Text>
-                <Text style={styles.tagline}>Fast, Secure & Simple Payments</Text>
+                <Text style={styles.brandTitle}>{t('landing.title')}</Text>
             </Animated.View>
 
-            {/* Feature Cards */}
-            <Animated.View
-                style={[
-                    styles.featuresContainer,
-                    {
-                        opacity: fadeAnim,
-                        transform: [{ scale: scaleAnim }],
-                    }
-                ]}
+            {/* Slider Content */}
+            <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                style={styles.scrollView}
             >
-                {features.map((feature, index) => (
-                    <View key={index} style={styles.featureCard}>
-                        <View style={[styles.iconCircle, { backgroundColor: feature.color + '20' }]}>
-                            <Ionicons name={feature.icon as any} size={28} color={feature.color} />
-                        </View>
-                        <Text style={styles.featureTitle}>{feature.title}</Text>
-                        <Text style={styles.featureDescription}>{feature.description}</Text>
+                {slides.map((slide, index) => (
+                    <View key={index} style={styles.slide}>
+                        <Animated.View
+                            style={[
+                                styles.slideContent,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideInAnim }],
+                                }
+                            ]}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: slide.color + '20' }]}>
+                                <Ionicons name={slide.icon as any} size={80} color={slide.color} />
+                            </View>
+                            <Text style={styles.slideTitle}>{slide.title}</Text>
+                            <Text style={styles.slideDescription}>{slide.description}</Text>
+                            <Text style={styles.slideTagline}>{slide.tagline}</Text>
+                        </Animated.View>
                     </View>
                 ))}
-            </Animated.View>
+            </ScrollView>
 
-            {/* CTA Button */}
-            <Animated.View
-                style={{
-                    opacity: fadeAnim,
-                    transform: [{ scale: pulseAnim }],
-                }}
-            >
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => router.push('/login')}
-                    activeOpacity={0.8}
+            {/* Footer Section */}
+            <View style={styles.footer}>
+                {/* Pagination Dots */}
+                <View style={styles.pagination}>
+                    {slides.map((_, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.dot,
+                                activeIndex === index && styles.activeDot
+                            ]}
+                        />
+                    ))}
+                </View>
+
+                {/* Always visible button */}
+                <Animated.View
+                    style={{
+                        transform: [{ scale: pulseAnim }],
+                        width: '100%',
+                    }}
                 >
-                    <LinearGradient
-                        colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.buttonGradient}
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => router.push('/login')}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.buttonText}>Get Started</Text>
-                        <Ionicons name="arrow-forward" size={20} color="white" style={styles.buttonIcon} />
-                    </LinearGradient>
-                </TouchableOpacity>
-            </Animated.View>
+                        <LinearGradient
+                            colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.buttonGradient}
+                        >
+                            <Text style={styles.buttonText}>{t('landing.getStarted')}</Text>
+                            <Ionicons name="arrow-forward" size={22} color="white" style={styles.buttonIcon} />
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </Animated.View>
 
-            {/* Footer */}
-            <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-                <Text style={styles.footerText}>Join thousands of happy users</Text>
-            </Animated.View>
+                <Animated.View style={{ opacity: fadeAnim }}>
+                    <Text style={styles.joinText}>{t('landing.join')}</Text>
+                </Animated.View>
+            </View>
         </LinearGradient>
     );
 }
@@ -157,115 +179,122 @@ export default function Index() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 60,
-        paddingHorizontal: 20,
     },
     header: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 40,
+        justifyContent: 'center',
+        marginTop: height * 0.08,
+        gap: 12,
     },
     logoContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: 'rgba(167, 139, 250, 0.1)',
+        width: 50,
+        height: 50,
+        borderRadius: 15,
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        borderWidth: 2,
-        borderColor: 'rgba(167, 139, 250, 0.3)',
-    },
-    title: {
-        fontSize: 56,
-        fontWeight: '900',
-        color: 'white',
-        letterSpacing: 2,
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#A78BFA',
-        marginBottom: 8,
-    },
-    tagline: {
-        fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontWeight: '400',
-    },
-    featuresContainer: {
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 10,
-        marginVertical: 20,
-    },
-    featureCard: {
-        flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 20,
-        padding: 20,
-        marginHorizontal: 6,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
+        borderColor: 'rgba(167, 139, 250, 0.3)',
     },
-    iconCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+    brandTitle: {
+        fontSize: 32,
+        fontWeight: '900',
+        color: 'white',
+        letterSpacing: 1.5,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    slide: {
+        width: width,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12,
+        paddingHorizontal: 40,
     },
-    featureTitle: {
-        fontSize: 14,
-        fontWeight: '700',
+    slideContent: {
+        alignItems: 'center',
+    },
+    iconBox: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 40,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    slideTitle: {
+        fontSize: 36,
+        fontWeight: 'bold',
         color: 'white',
-        marginBottom: 6,
         textAlign: 'center',
+        marginBottom: 16,
     },
-    featureDescription: {
-        fontSize: 11,
+    slideDescription: {
+        fontSize: 20,
+        color: '#A78BFA',
+        fontWeight: '600',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    slideTagline: {
+        fontSize: 16,
         color: 'rgba(255, 255, 255, 0.6)',
         textAlign: 'center',
-        lineHeight: 16,
+        lineHeight: 24,
+    },
+    footer: {
+        paddingHorizontal: 30,
+        paddingBottom: height * 0.06,
+        alignItems: 'center',
+    },
+    pagination: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 40,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    activeDot: {
+        width: 24,
+        backgroundColor: '#A78BFA',
     },
     button: {
-        borderRadius: 30,
+        borderRadius: 25,
         overflow: 'hidden',
-        elevation: 8,
+        width: '100%',
+        elevation: 10,
         shadowColor: '#A78BFA',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.5,
+        shadowRadius: 15,
+        marginBottom: 24,
     },
     buttonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 50,
-        paddingVertical: 18,
+        paddingVertical: 20,
     },
     buttonText: {
         color: 'white',
-        fontSize: 18,
-        fontWeight: '700',
-        marginRight: 8,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginRight: 10,
     },
     buttonIcon: {
-        marginLeft: 4,
+        marginLeft: 2,
     },
-    footer: {
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    footerText: {
+    joinText: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.5)',
+        color: 'rgba(255, 255, 255, 0.4)',
         fontWeight: '500',
     },
 });
+

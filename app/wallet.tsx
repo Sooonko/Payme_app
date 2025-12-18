@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { sendMoney, UserSearchResponse } from '../src/api/client';
 
 export default function Wallet() {
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams();
     const [amount, setAmount] = useState('');
@@ -68,7 +70,7 @@ export default function Wallet() {
 
     const handleTransfer = async () => {
         if (!amount || parseFloat(amount) <= 0) {
-            Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+            Alert.alert(t('wallet.errors.invalidAmount'), t('wallet.errors.enterValidAmount'));
             return;
         }
 
@@ -93,10 +95,10 @@ export default function Wallet() {
             if (response.success) {
                 setShowSuccessModal(true);
             } else {
-                Alert.alert('Error', response.message || 'Transaction failed');
+                Alert.alert(t('common.error'), response.message || t('wallet.errors.failed'));
             }
         } catch (error) {
-            Alert.alert('Error', 'Failed to connect to server');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -121,7 +123,7 @@ export default function Wallet() {
                     }
                 ]}
             >
-                <Text style={styles.headerTitle}>Send Money</Text>
+                <Text style={styles.headerTitle}>{t('wallet.title')}</Text>
             </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -135,9 +137,9 @@ export default function Wallet() {
                         }
                     ]}
                 >
-                    <Text style={styles.amountLabel}>Enter Amount</Text>
+
                     <View style={styles.amountContainer}>
-                        <Text style={styles.currencySymbol}>$</Text>
+                        <Text style={styles.currencySymbol}>₮</Text>
                         <TextInput
                             value={amount}
                             onChangeText={setAmount}
@@ -156,7 +158,7 @@ export default function Wallet() {
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Text style={styles.quickAmountLabel}>Quick Amount</Text>
+
                     <View style={styles.quickAmountsContainer}>
                         {quickAmounts.map((amt) => (
                             <TouchableOpacity
@@ -169,9 +171,8 @@ export default function Wallet() {
                                 activeOpacity={0.7}
                             >
                                 <Text style={[
-                                    styles.quickAmountText,
                                     amount === amt && styles.quickAmountTextActive
-                                ]}>${amt}</Text>
+                                ]}>₮{amt}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -186,9 +187,12 @@ export default function Wallet() {
                         }}
                     >
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Send To</Text>
-                            <TouchableOpacity onPress={() => setSelectedUser(null)}>
-                                <Text style={styles.changeText}>Change</Text>
+                            <Text style={styles.sectionTitle}>{t('wallet.sendTo')}</Text>
+                            <TouchableOpacity onPress={() => {
+                                setSelectedUser(null);
+                                router.setParams({ userId: '', name: '', phone: '', walletId: '' });
+                            }}>
+                                <Text style={styles.changeText}>{t('wallet.change')}</Text>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.recipientCard}>
@@ -235,7 +239,7 @@ export default function Wallet() {
                             ) : (
                                 <>
                                     <Text style={styles.confirmButtonText}>
-                                        {selectedUser ? 'Confirm Transfer' : 'Select Recipient'}
+                                        {selectedUser ? t('wallet.button.confirm') : t('wallet.button.select')}
                                     </Text>
                                     <Ionicons
                                         name={selectedUser ? "paper-plane" : "arrow-forward"}
@@ -261,18 +265,19 @@ export default function Wallet() {
                         <View style={styles.successIcon}>
                             <Ionicons name="checkmark-circle" size={80} color="#4ADE80" />
                         </View>
-                        <Text style={styles.successTitle}>Transfer Successful!</Text>
-                        <Text style={styles.successAmount}>${parseFloat(amount || '0').toFixed(2)}</Text>
-                        <Text style={styles.successRecipient}>to {selectedUser?.name}</Text>
+                        <Text style={styles.successTitle}>{t('wallet.success.title')}</Text>
+                        <Text style={styles.successAmount}>₮{parseFloat(amount || '0').toFixed(2)}</Text>
+                        <Text style={styles.successRecipient}>{t('wallet.success.to')} {selectedUser?.name}</Text>
                         <TouchableOpacity
                             style={styles.doneButton}
                             onPress={() => {
                                 setShowSuccessModal(false);
                                 setAmount('');
                                 setSelectedUser(null);
+                                router.setParams({ userId: '', name: '', phone: '', walletId: '', amount: '' });
                             }}
                         >
-                            <Text style={styles.doneButtonText}>Done</Text>
+                            <Text style={styles.doneButtonText}>{t('wallet.success.done')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -316,14 +321,7 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         alignItems: 'center',
     },
-    amountLabel: {
-        fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginBottom: 16,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
+
     amountContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -342,14 +340,7 @@ const styles = StyleSheet.create({
         minWidth: 120,
         textAlign: 'center',
     },
-    quickAmountLabel: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
-        marginBottom: 16,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
+
     quickAmountsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

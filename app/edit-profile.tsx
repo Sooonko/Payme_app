@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { updateUserProfile } from '../src/api/client';
 
 export default function EditProfile() {
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams();
 
@@ -16,7 +18,7 @@ export default function EditProfile() {
 
     const handleSave = async () => {
         if (!name || !email || !phone) {
-            Alert.alert('Error', 'Please fill in all required fields');
+            Alert.alert(t('common.error'), t('editProfile.errors.required'));
             return;
         }
 
@@ -30,14 +32,14 @@ export default function EditProfile() {
             });
 
             if (response.success) {
-                Alert.alert('Success', 'Profile updated successfully', [
+                Alert.alert(t('common.success'), t('editProfile.success'), [
                     { text: 'OK', onPress: () => router.push('/profile') }
                 ]);
             } else {
-                Alert.alert('Error', response.message || 'Failed to update profile');
+                Alert.alert(t('common.error'), response.message || t('editProfile.errors.failed'));
             }
         } catch (error) {
-            Alert.alert('Error', 'Failed to connect to server');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -52,7 +54,7 @@ export default function EditProfile() {
                 <TouchableOpacity onPress={() => router.push('/profile')}>
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
+                <Text style={styles.headerTitle}>{t('editProfile.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -60,24 +62,24 @@ export default function EditProfile() {
                 <View style={styles.form}>
                     {/* Name */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Full Name</Text>
+                        <Text style={styles.label}>{t('editProfile.fields.name')}</Text>
                         <TextInput
                             style={styles.input}
                             value={name}
                             onChangeText={setName}
-                            placeholder="Enter your name"
+                            placeholder={t('editProfile.placeholders.name')}
                             placeholderTextColor="rgba(255,255,255,0.3)"
                         />
                     </View>
 
                     {/* Email */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email</Text>
+                        <Text style={styles.label}>{t('editProfile.fields.email')}</Text>
                         <TextInput
                             style={styles.input}
                             value={email}
                             onChangeText={setEmail}
-                            placeholder="Enter your email"
+                            placeholder={t('editProfile.placeholders.email')}
                             placeholderTextColor="rgba(255,255,255,0.3)"
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -86,12 +88,12 @@ export default function EditProfile() {
 
                     {/* Phone */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Phone Number</Text>
+                        <Text style={styles.label}>{t('editProfile.fields.phone')}</Text>
                         <TextInput
                             style={styles.input}
                             value={phone}
                             onChangeText={setPhone}
-                            placeholder="Enter your phone number"
+                            placeholder={t('editProfile.placeholders.phone')}
                             placeholderTextColor="rgba(255,255,255,0.3)"
                             keyboardType="phone-pad"
                         />
@@ -99,12 +101,12 @@ export default function EditProfile() {
 
                     {/* Address */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Address</Text>
+                        <Text style={styles.label}>{t('editProfile.fields.address')}</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             value={address}
                             onChangeText={setAddress}
-                            placeholder="Enter your address"
+                            placeholder={t('editProfile.placeholders.address')}
                             placeholderTextColor="rgba(255,255,255,0.3)"
                             multiline
                             numberOfLines={3}
@@ -120,7 +122,7 @@ export default function EditProfile() {
                         {loading ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
+                            <Text style={styles.saveButtonText}>{t('editProfile.button')}</Text>
                         )}
                     </TouchableOpacity>
                 </View>

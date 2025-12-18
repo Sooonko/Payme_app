@@ -9,6 +9,8 @@ import "../global.css";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { NetworkAlert } from '@/src/components/NetworkAlert';
 import { NetworkProvider } from '@/src/contexts/NetworkContext';
+import "@/src/i18n/i18n"; // Initialize i18n configuration
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -20,6 +22,7 @@ export default function RootLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
+            tabBarShowLabel: false,
             tabBarActiveTintColor: '#A78BFA',
             tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
             tabBarStyle: {
@@ -30,16 +33,13 @@ export default function RootLayout() {
               right: 20,
               borderRadius: 35,
               height: 70,
-              paddingBottom: 10,
               borderTopWidth: 0,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 10 },
               shadowOpacity: 0.25,
               shadowRadius: 10,
               elevation: 5,
-            },
-            tabBarLabelStyle: {
-              fontSize: 10,
+              paddingTop: 0, // Ensure icons are centered
             },
           }}
         >

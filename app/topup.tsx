@@ -3,19 +3,26 @@
 // Remove mock and uncomment API calls when backend is ready
 
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Animated, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SuccessModal from '../components/SuccessModal';
 import { confirmTopUp, TopUpResponse } from '../src/api/client';
 
 export default function TopUp() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [transaction, setTransaction] = useState<TopUpResponse['data'] | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successAmount, setSuccessAmount] = useState(0);
+
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
 
     const quickAmounts = ['10', '20', '50', '100'];
 
@@ -24,12 +31,26 @@ export default function TopUp() {
             setTransaction(null);
             setAmount('');
             setLoading(false);
+
+            // Start entrance animations
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }, [])
     );
 
     const handleTopUp = async () => {
         if (!amount || parseFloat(amount) <= 0) {
-            Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+            Alert.alert(t('wallet.errors.invalidAmount'), t('wallet.errors.enterValidAmount'));
             return;
         }
 
@@ -43,7 +64,7 @@ export default function TopUp() {
             if (response.success) {
                 setTransaction(response.data);
             } else {
-                Alert.alert('Error', response.message || 'Top-up initiation failed');
+                Alert.alert(t('common.error'), response.message || 'Top-up initiation failed');
             }
             */
 
@@ -55,7 +76,7 @@ export default function TopUp() {
             setAmount('');
 
         } catch (error) {
-            Alert.alert('Error', 'Failed to connect to server');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -71,10 +92,10 @@ export default function TopUp() {
                 setSuccessAmount(transaction.amount);
                 setShowSuccessModal(true);
             } else {
-                Alert.alert('Error', response.message || 'Failed to confirm top-up');
+                Alert.alert(t('common.error'), response.message || 'Failed to confirm top-up');
             }
         } catch (error) {
-            Alert.alert('Error', 'Failed to connect to server');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -87,132 +108,214 @@ export default function TopUp() {
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
 
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.backButton}>←</Text>
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }
+                ]}
+            >
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Top Up</Text>
+                <Text style={styles.headerTitle}>{t('topup.title')}</Text>
                 <View style={{ width: 40 }} />
-            </View>
+            </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {!transaction ? (
                     <>
                         {/* Amount Input Card */}
-                        <View style={styles.amountCard}>
-                            <Text style={styles.amountLabel}>Enter Amount</Text>
-                            <View style={styles.amountContainer}>
-                                <Text style={styles.currencySymbol}>$</Text>
-                                <TextInput
-                                    value={amount}
-                                    onChangeText={setAmount}
-                                    placeholder="0.00"
-                                    placeholderTextColor="rgba(255,255,255,0.3)"
-                                    keyboardType="numeric"
-                                    style={styles.amountInput}
-                                />
-                            </View>
-                        </View>
+                        <Animated.View
+                            style={[
+                                styles.amountCard,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideAnim }],
+                                }
+                            ]}
+                        >
+                            <LinearGradient
+                                colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.amountCardGradient}
+                            >
+
+                                <View style={styles.amountContainer}>
+                                    <Text style={styles.currencySymbol}>₮</Text>
+                                    <TextInput
+                                        value={amount}
+                                        onChangeText={setAmount}
+                                        placeholder="0.00"
+                                        placeholderTextColor="rgba(255,255,255,0.3)"
+                                        keyboardType="numeric"
+                                        style={styles.amountInput}
+                                    />
+                                </View>
+                            </LinearGradient>
+                        </Animated.View>
 
                         {/* Quick Amounts */}
-                        <Text style={styles.quickAmountLabel}>Quick Amount</Text>
-                        <View style={styles.quickAmountsContainer}>
-                            {quickAmounts.map((amt) => (
-                                <TouchableOpacity
-                                    key={amt}
-                                    style={[
-                                        styles.quickAmountChip,
-                                        amount === amt && styles.quickAmountChipActive
-                                    ]}
-                                    onPress={() => setAmount(amt)}
-                                >
-                                    <Text style={[
-                                        styles.quickAmountText,
-                                        amount === amt && styles.quickAmountTextActive
-                                    ]}>${amt}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                        <Animated.View
+                            style={{
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            }}
+                        >
+
+                            <View style={styles.quickAmountsContainer}>
+                                {quickAmounts.map((amt) => (
+                                    <TouchableOpacity
+                                        key={amt}
+                                        style={[
+                                            styles.quickAmountChip,
+                                            amount === amt && styles.quickAmountChipActive
+                                        ]}
+                                        onPress={() => setAmount(amt)}
+                                        activeOpacity={0.7}
+                                    >
+                                        {amount === amt ? (
+                                            <LinearGradient
+                                                colors={['#A78BFA', '#8B5CF6']}
+                                                style={styles.quickAmountGradient}
+                                            >
+                                                <Text style={styles.quickAmountTextActive}>₮{amt}</Text>
+                                            </LinearGradient>
+                                        ) : (
+                                            <Text style={styles.quickAmountText}>₮{amt}</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </Animated.View>
 
                         {/* Payment Method */}
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Payment Method</Text>
-                        </View>
-                        <TouchableOpacity style={styles.paymentMethodCard}>
-                            <View style={styles.methodLeft}>
-                                <View style={styles.methodIconContainer}>
-                                    <Ionicons name="card-outline" size={24} color="#A78BFA" />
-                                </View>
-                                <View style={styles.methodInfo}>
-                                    <Text style={styles.methodTitle}>Bank Card</Text>
-                                    <Text style={styles.methodSubtitle}>**** **** **** 1234</Text>
-                                </View>
+                        <Animated.View
+                            style={{
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            }}
+                        >
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>{t('topup.paymentMethod')}</Text>
                             </View>
-                            <View style={styles.checkmarkBadge}>
-                                <Ionicons name="checkmark" size={16} color="white" />
-                            </View>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.paymentMethodCard} activeOpacity={0.7}>
+                                <View style={styles.methodLeft}>
+                                    <LinearGradient
+                                        colors={['#A78BFA', '#8B5CF6']}
+                                        style={styles.methodIconContainer}
+                                    >
+                                        <Ionicons name="card-outline" size={24} color="white" />
+                                    </LinearGradient>
+                                    <View style={styles.methodInfo}>
+                                        <Text style={styles.methodTitle}>{t('topup.methods.bankCard')}</Text>
+                                        <Text style={styles.methodSubtitle}>•••• •••• •••• 1234</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.checkmarkBadge}>
+                                    <Ionicons name="checkmark" size={16} color="white" />
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
 
                         {/* Initiate Button */}
-                        <TouchableOpacity
-                            style={styles.confirmButton}
-                            onPress={handleTopUp}
-                            disabled={loading}
+                        <Animated.View
+                            style={{
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            }}
                         >
-                            {loading ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <>
-                                    <Text style={styles.confirmButtonText}>Confirm Top Up</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
-                                </>
-                            )}
-                        </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleTopUp}
+                                disabled={loading}
+                                activeOpacity={0.8}
+                            >
+                                <LinearGradient
+                                    colors={['#34D399', '#10B981']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.confirmButton}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator color="white" />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.confirmButtonText}>{t('topup.button.confirm')}</Text>
+                                            <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                        </>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </Animated.View>
                     </>
                 ) : (
-                    <View style={styles.confirmationContainer}>
+                    <Animated.View
+                        style={[
+                            styles.confirmationContainer,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideAnim }],
+                            }
+                        ]}
+                    >
                         {/* Header Section */}
                         <View style={styles.confirmHeader}>
-                            <Ionicons name="checkmark-circle" size={32} color="#10B981" />
-                            <Text style={styles.confirmHeaderText}>Ready to Complete</Text>
+                            <View style={styles.successIconContainer}>
+                                <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+                            </View>
+                            <Text style={styles.confirmHeaderText}>{t('topup.confirmation.ready')}</Text>
+                            <Text style={styles.confirmSubtext}>{t('topup.confirmation.scan')}</Text>
                         </View>
 
                         {/* QR Code Card */}
                         <View style={styles.qrCard}>
-                            <View style={styles.qrContainer}>
-                                {transaction.qrCode ? (
-                                    <Image
-                                        source={{ uri: transaction.qrCode }}
-                                        style={styles.qrCode}
-                                        resizeMode="contain"
-                                    />
-                                ) : (
-                                    <View style={styles.placeholderQr}>
-                                        <Ionicons name="qr-code-outline" size={100} color="rgba(167, 139, 250, 0.4)" />
-                                        <Text style={styles.placeholderText}>QR Code not available</Text>
-                                    </View>
-                                )}
-                            </View>
-
-                            {/* QR Code Label */}
-                            <Text style={styles.qrLabel}>Scan to Pay</Text>
+                            <LinearGradient
+                                colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.05)']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.qrCardGradient}
+                            >
+                                <View style={styles.qrContainer}>
+                                    {transaction.qrCode ? (
+                                        <Image
+                                            source={{ uri: transaction.qrCode }}
+                                            style={styles.qrCode}
+                                            resizeMode="contain"
+                                        />
+                                    ) : (
+                                        <View style={styles.placeholderQr}>
+                                            <Ionicons name="qr-code-outline" size={100} color="rgba(167, 139, 250, 0.4)" />
+                                            <Text style={styles.placeholderText}>{t('topup.confirmation.qrUnavailable')}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                                <Text style={styles.qrLabel}>{t('topup.confirmation.scanToPay')}</Text>
+                            </LinearGradient>
                         </View>
 
                         {/* Transaction Details */}
                         <View style={styles.detailsCard}>
                             <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>Amount</Text>
-                                <Text style={styles.detailAmount}>${transaction.amount.toFixed(2)}</Text>
+                                <Text style={styles.detailLabel}>{t('topup.confirmation.amount')}</Text>
+                                <Text style={styles.detailAmount}>₮{transaction.amount.toFixed(2)}</Text>
                             </View>
 
                             <View style={styles.divider} />
 
                             <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>Status</Text>
+                                <Text style={styles.detailLabel}>{t('topup.confirmation.status')}</Text>
                                 <View style={styles.statusBadge}>
                                     <View style={styles.statusDot} />
                                     <Text style={styles.statusText}>{transaction.status}</Text>
@@ -222,25 +325,32 @@ export default function TopUp() {
 
                         {/* Confirm Button */}
                         <TouchableOpacity
-                            style={styles.confirmButton}
                             onPress={handleConfirm}
                             disabled={loading}
+                            activeOpacity={0.8}
                         >
-                            {loading ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <>
-                                    <Text style={styles.confirmButtonText}>Confirm Payment</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
-                                </>
-                            )}
+                            <LinearGradient
+                                colors={['#34D399', '#10B981']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.confirmButton}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <>
+                                        <Text style={styles.confirmButtonText}>{t('topup.button.confirmPayment')}</Text>
+                                        <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                    </>
+                                )}
+                            </LinearGradient>
                         </TouchableOpacity>
 
                         {/* Help Text */}
                         <Text style={styles.helpText}>
-                            Click confirm after scanning the QR code or making payment
+                            {t('topup.confirmation.help')}
                         </Text>
-                    </View>
+                    </Animated.View>
                 )}
             </ScrollView>
 
@@ -249,14 +359,13 @@ export default function TopUp() {
                 amount={successAmount}
                 onClose={handleSuccessClose}
             />
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
     },
     header: {
         flexDirection: 'row',
@@ -267,8 +376,14 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     backButton: {
-        fontSize: 28,
-        color: 'white',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     headerTitle: {
         fontSize: 20,
@@ -280,22 +395,22 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     amountCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-        borderRadius: 24,
-        padding: 24,
         marginTop: 20,
         marginBottom: 24,
+        borderRadius: 24,
+        overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
     },
-    amountLabel: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
-        marginBottom: 16,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+    amountCardGradient: {
+        padding: 24,
+        borderRadius: 24,
     },
+
     amountContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -314,14 +429,7 @@ const styles = StyleSheet.create({
         minWidth: 120,
         textAlign: 'center',
     },
-    quickAmountLabel: {
-        fontSize: 13,
-        color: 'rgba(255, 255, 255, 0.5)',
-        marginBottom: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
+
     quickAmountsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -330,26 +438,42 @@ const styles = StyleSheet.create({
     },
     quickAmountChip: {
         flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         paddingVertical: 14,
         paddingHorizontal: 16,
         borderRadius: 16,
-        borderWidth: 2,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
         alignItems: 'center',
+        overflow: 'hidden',
     },
     quickAmountChipActive: {
-        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        backgroundColor: 'transparent',
         borderColor: '#A78BFA',
+        borderWidth: 2,
+    },
+    quickAmountGradient: {
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        width: '100%',
+        alignItems: 'center',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
     },
     quickAmountText: {
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: 'rgba(255, 255, 255, 0.9)',
         fontWeight: '600',
         fontSize: 15,
     },
     quickAmountTextActive: {
-        color: '#A78BFA',
+        color: 'white',
         fontWeight: 'bold',
+        fontSize: 15,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -366,12 +490,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 20,
         padding: 16,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
     },
     methodLeft: {
         flexDirection: 'row',
@@ -382,7 +506,6 @@ const styles = StyleSheet.create({
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: 'rgba(167, 139, 250, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 14,
@@ -397,7 +520,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     methodSubtitle: {
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(255,255,255,0.6)',
         fontSize: 14,
     },
     checkmarkBadge: {
@@ -410,12 +533,16 @@ const styles = StyleSheet.create({
     },
     confirmButton: {
         flexDirection: 'row',
-        backgroundColor: '#A78BFA',
         borderRadius: 25,
         paddingVertical: 18,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 32,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     confirmButtonText: {
         color: 'white',
@@ -428,25 +555,38 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     confirmHeader: {
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
-        gap: 12,
+    },
+    successIconContainer: {
+        marginBottom: 16,
     },
     confirmHeaderText: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
+        marginBottom: 8,
+    },
+    confirmSubtext: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.6)',
+        textAlign: 'center',
     },
     qrCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
         borderRadius: 24,
-        padding: 20,
         marginBottom: 20,
-        alignItems: 'center',
+        overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    qrCardGradient: {
+        padding: 20,
+        alignItems: 'center',
     },
     qrContainer: {
         width: 220,
@@ -484,18 +624,18 @@ const styles = StyleSheet.create({
     },
     qrLabel: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
+        color: 'rgba(255, 255, 255, 0.7)',
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
     detailsCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 16,
         padding: 16,
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.15)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
     },
     detailRow: {
         flexDirection: 'row',
@@ -505,7 +645,7 @@ const styles = StyleSheet.create({
     },
     detailLabel: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.5)',
+        color: 'rgba(255, 255, 255, 0.6)',
         fontWeight: '500',
     },
     detailAmount: {
@@ -515,13 +655,13 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
         marginVertical: 4,
     },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        backgroundColor: 'rgba(167, 139, 250, 0.2)',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
@@ -541,7 +681,7 @@ const styles = StyleSheet.create({
     },
     helpText: {
         fontSize: 12,
-        color: 'rgba(255, 255, 255, 0.4)',
+        color: 'rgba(255, 255, 255, 0.5)',
         textAlign: 'center',
         marginTop: 16,
         fontStyle: 'italic',

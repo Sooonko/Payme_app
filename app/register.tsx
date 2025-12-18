@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { registerUser } from '../src/api/client';
 
 export default function Register() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -239,31 +241,31 @@ export default function Register() {
         let hasError = false;
 
         if (!name) {
-            newErrors.name = 'Full Name is required';
+            newErrors.name = t('register.errors.nameRequired');
             hasError = true;
         }
 
         if (!email) {
-            newErrors.email = 'Email is required';
+            newErrors.email = t('register.errors.emailRequired');
             hasError = true;
         } else {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                newErrors.email = 'Please enter a valid email address';
+                newErrors.email = t('register.errors.emailInvalid');
                 hasError = true;
             }
         }
 
         if (!phoneNumber) {
-            newErrors.phone = 'Phone Number is required';
+            newErrors.phone = t('register.errors.phoneRequired');
             hasError = true;
         } else if (phoneNumber.length !== 8 || !/^\d+$/.test(phoneNumber)) {
-            newErrors.phone = 'Phone number must be exactly 8 digits';
+            newErrors.phone = t('register.errors.phoneInvalid');
             hasError = true;
         }
 
         if (!password) {
-            newErrors.password = 'Password is required';
+            newErrors.password = t('register.errors.passwordRequired');
             hasError = true;
         }
 
@@ -281,15 +283,15 @@ export default function Register() {
             });
 
             if (response.success) {
-                Alert.alert('Success', 'Account created successfully!', [
-                    { text: 'OK', onPress: () => router.push('/home') }
+                Alert.alert(t('register.success.title'), t('register.success.message'), [
+                    { text: t('register.success.ok'), onPress: () => router.push('/home') }
                 ]);
             } else {
-                Alert.alert('Registration Failed', response.message || 'Something went wrong');
+                Alert.alert(t('register.errors.failed'), response.message || t('register.errors.generic'));
             }
         } catch (error) {
             console.error('Registration error details:', error);
-            Alert.alert('Error', 'Failed to connect to server. Please check your internet connection and ensure the server is running.');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -339,8 +341,8 @@ export default function Register() {
                                 <Ionicons name="person-add" size={48} color="#A78BFA" />
                             </Animated.View>
                         </Animated.View>
-                        <Text style={styles.title}>Create Account</Text>
-                        <Text style={styles.subtitle}>Join us today!</Text>
+                        <Text style={styles.title}>{t('register.title')}</Text>
+                        <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
                     </View>
 
                     {/* Form Container */}
@@ -372,7 +374,7 @@ export default function Register() {
                                     },
                                 ]}
                             >
-                                Full Name
+                                {t('register.name')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -388,7 +390,7 @@ export default function Register() {
                                     }}
                                     onFocus={() => handleFocus('name')}
                                     onBlur={() => handleBlur('name', name)}
-                                    placeholder={!nameFocused ? "Full Name" : ""}
+                                    placeholder={!nameFocused ? t('register.name') : ""}
                                     placeholderTextColor="#8F92A1"
                                     style={styles.input}
                                 />
@@ -423,7 +425,7 @@ export default function Register() {
                                     },
                                 ]}
                             >
-                                Email
+                                {t('register.email')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -439,7 +441,7 @@ export default function Register() {
                                     }}
                                     onFocus={() => handleFocus('email')}
                                     onBlur={() => handleBlur('email', email)}
-                                    placeholder={!emailFocused ? "Email" : ""}
+                                    placeholder={!emailFocused ? t('register.email') : ""}
                                     placeholderTextColor="#8F92A1"
                                     keyboardType="email-address"
                                     autoCapitalize="none"
@@ -476,7 +478,7 @@ export default function Register() {
                                     },
                                 ]}
                             >
-                                Phone Number
+                                {t('register.phone')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -492,7 +494,7 @@ export default function Register() {
                                     }}
                                     onFocus={() => handleFocus('phone')}
                                     onBlur={() => handleBlur('phone', phoneNumber)}
-                                    placeholder={!phoneFocused ? "Phone Number" : ""}
+                                    placeholder={!phoneFocused ? t('register.phone') : ""}
                                     placeholderTextColor="#8F92A1"
                                     keyboardType="phone-pad"
                                     style={styles.input}
@@ -528,7 +530,7 @@ export default function Register() {
                                     },
                                 ]}
                             >
-                                Password
+                                {t('register.password')}
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
@@ -544,7 +546,7 @@ export default function Register() {
                                     }}
                                     onFocus={() => handleFocus('password')}
                                     onBlur={() => handleBlur('password', password)}
-                                    placeholder={!passwordFocused ? "Password" : ""}
+                                    placeholder={!passwordFocused ? t('register.password') : ""}
                                     placeholderTextColor="#8F92A1"
                                     secureTextEntry={!showPassword}
                                     autoCapitalize="none"
@@ -599,7 +601,7 @@ export default function Register() {
                                         <ActivityIndicator color="white" />
                                     ) : (
                                         <>
-                                            <Text style={styles.registerButtonText}>Sign Up</Text>
+                                            <Text style={styles.registerButtonText}>{t('register.button')}</Text>
                                             <Ionicons name="arrow-forward" size={20} color="white" style={styles.buttonIcon} />
                                         </>
                                     )}
@@ -609,7 +611,7 @@ export default function Register() {
 
                         {/* Login Link */}
                         <Text style={styles.loginText}>
-                            Already have an account? <Text style={styles.loginLink} onPress={() => router.push('/login')}>Log in</Text>
+                            {t('register.hasAccount')} <Text style={styles.loginLink} onPress={() => router.push('/login')}>{t('register.login')}</Text>
                         </Text>
                     </View>
                 </ScrollView>

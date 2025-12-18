@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { searchUsers, UserSearchResponse } from '../src/api/client';
 
 export default function UserSearch() {
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +81,7 @@ export default function UserSearch() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButtonContainer}>
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Select Recipient</Text>
+                <Text style={styles.headerTitle}>{t('userSearch.title')}</Text>
                 <View style={{ width: 40 }} />
             </Animated.View>
 
@@ -98,7 +100,7 @@ export default function UserSearch() {
                     <TextInput
                         value={searchQuery}
                         onChangeText={handleSearch}
-                        placeholder="Search by name or phone"
+                        placeholder={t('userSearch.searchPlaceholder')}
                         placeholderTextColor="rgba(255,255,255,0.5)"
                         style={styles.searchInput}
                         autoFocus={true}
@@ -112,7 +114,7 @@ export default function UserSearch() {
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Text style={styles.sectionTitle}>Search Results</Text>
+                    <Text style={styles.sectionTitle}>{t('userSearch.section.results')}</Text>
                     {loading ? (
                         <ActivityIndicator color="#A78BFA" style={{ marginBottom: 20 }} />
                     ) : (
@@ -149,7 +151,7 @@ export default function UserSearch() {
                                     </TouchableOpacity>
                                 ))
                             ) : (
-                                searchQuery.length > 2 && <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 20 }}>No users found</Text>
+                                searchQuery.length > 2 && <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 20 }}>{t('userSearch.noUsers')}</Text>
                             )}
                         </View>
                     )}
@@ -162,7 +164,7 @@ export default function UserSearch() {
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Text style={styles.sectionTitle}>Quick Send</Text>
+                    <Text style={styles.sectionTitle}>{t('userSearch.section.quickSend')}</Text>
                     <View style={styles.quickSendContainer}>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -171,7 +173,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="call" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>Phone</Text>
+                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.phone')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -180,7 +182,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="mail" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>Email</Text>
+                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.email')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -189,7 +191,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="qr-code" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>QR Code</Text>
+                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.qrCode')}</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>

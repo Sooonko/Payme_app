@@ -20,7 +20,10 @@ const getCardColor = (index: number): string => {
     return colors[index % colors.length];
 };
 
+import { useTranslation } from 'react-i18next';
+
 export default function Home() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [balance, setBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -104,7 +107,7 @@ export default function Home() {
                 ]}
             >
                 <View>
-                    <Text style={styles.greeting}>Hello, Jane Doe!</Text>
+                    <Text style={styles.greeting}>{t('home.greeting')}</Text>
                 </View>
                 <TouchableOpacity style={styles.notificationIcon} onPress={() => router.push({ pathname: '/cards', params: { from: 'home' } })}>
                     <Ionicons name="card-outline" size={20} color="white" />
@@ -123,7 +126,7 @@ export default function Home() {
                     ]}
                 >
                     <View style={styles.balanceHeader}>
-                        <Text style={styles.balanceLabel}>Total Balance</Text>
+                        <Text style={styles.balanceLabel}>{t('home.balance')}</Text>
                         <TouchableOpacity
                             onPress={toggleBalanceVisibility}
                             style={styles.eyeButton}
@@ -139,7 +142,7 @@ export default function Home() {
                         <ActivityIndicator color="white" style={{ marginTop: 8 }} />
                     ) : (
                         <Text style={styles.balanceAmount}>
-                            {balanceVisible ? `$${(balance || 0).toFixed(2)}` : '••••••'}
+                            {balanceVisible ? `₮${(balance || 0).toFixed(2)}` : '••••••'}
                         </Text>
                     )}
                 </Animated.View>
@@ -155,7 +158,7 @@ export default function Home() {
                             }
                         ]}
                     >
-                        <Text style={styles.carouselTitle}>My Cards</Text>
+                        <Text style={styles.carouselTitle}>{t('home.myCards')}</Text>
                         <ScrollView
                             horizontal
                             pagingEnabled
@@ -181,7 +184,7 @@ export default function Home() {
                                         </View>
                                         {card.isDefault && (
                                             <View style={styles.miniDefaultBadge}>
-                                                <Text style={styles.miniDefaultText}>Default</Text>
+                                                <Text style={styles.miniDefaultText}>{t('home.default')}</Text>
                                             </View>
                                         )}
                                         <Text style={styles.miniCardNumber}>
@@ -212,7 +215,7 @@ export default function Home() {
                         }
                     ]}
                 >
-                    <Text style={styles.sectionTitle}>Quick Actions</Text>
+                    <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
                     <View style={styles.quickActions}>
                         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/wallet')} activeOpacity={0.7}>
                             <LinearGradient
@@ -221,7 +224,7 @@ export default function Home() {
                             >
                                 <Ionicons name="paper-plane" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.actionText} numberOfLines={1}>Send</Text>
+                            <Text style={styles.actionText} numberOfLines={1}>{t('home.actions.send')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -230,7 +233,7 @@ export default function Home() {
                             >
                                 <Ionicons name="download" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.actionText} numberOfLines={1}>Receive</Text>
+                            <Text style={styles.actionText} numberOfLines={1}>{t('home.actions.receive')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/topup')} activeOpacity={0.7}>
                             <LinearGradient
@@ -239,7 +242,7 @@ export default function Home() {
                             >
                                 <Ionicons name="add-circle" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.actionText} numberOfLines={1}>Top Up</Text>
+                            <Text style={styles.actionText} numberOfLines={1}>{t('home.actions.topUp')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -248,7 +251,7 @@ export default function Home() {
                             >
                                 <Ionicons name="cart" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.actionText} numberOfLines={1}>Buy</Text>
+                            <Text style={styles.actionText} numberOfLines={1}>{t('home.actions.buy')}</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -264,12 +267,12 @@ export default function Home() {
                     ]}
                 >
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+                        <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
                         <TouchableOpacity
                             style={styles.viewAllContainer}
                             onPress={() => router.push('/activity')}
                         >
-                            <Text style={styles.viewAll}>View all</Text>
+                            <Text style={styles.viewAll}>{t('home.viewAll')}</Text>
                             <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
                         </TouchableOpacity>
                     </View>
@@ -284,7 +287,7 @@ export default function Home() {
                                     <Text style={styles.transactionSubtitle}>USD 48789.00</Text>
                                 </View>
                             </View>
-                            <Text style={styles.transactionAmount}>+$1,200</Text>
+                            <Text style={styles.transactionAmount}>+₮1,200</Text>
                         </View>
                     </View>
                 </Animated.View>

@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, FlatList, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getTransactionHistory, TransactionHistoryResponse } from '../src/api/client';
 
 type FilterType = 'all' | 'income' | 'expense';
 
 export default function Activity() {
+    const { t, i18n } = useTranslation();
     const [transactions, setTransactions] = useState<TransactionHistoryResponse['data']>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +64,7 @@ export default function Activity() {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString(i18n.language, {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
@@ -118,7 +120,7 @@ export default function Activity() {
                     <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
                 </View>
                 <Text style={[styles.amount, { color: isIncome ? '#4ADE80' : '#F87171' }]}>
-                    {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
+                    {isIncome ? '+' : '-'}₮{item.amount.toFixed(2)}
                 </Text>
             </Animated.View>
         );
@@ -143,7 +145,7 @@ export default function Activity() {
                     }
                 ]}
             >
-                <Text style={styles.headerTitle}>Activity</Text>
+                <Text style={styles.headerTitle}>{t('activity.title')}</Text>
             </Animated.View>
 
             {/* Stats Card */}
@@ -166,8 +168,8 @@ export default function Activity() {
                         </LinearGradient>
                     </View>
                     <View>
-                        <Text style={styles.statLabel}>Income</Text>
-                        <Text style={styles.statValue}>${stats.income.toFixed(2)}</Text>
+                        <Text style={styles.statLabel}>{t('activity.income')}</Text>
+                        <Text style={styles.statValue}>₮{stats.income.toFixed(2)}</Text>
                     </View>
                 </View>
                 <View style={styles.statDivider} />
@@ -181,8 +183,8 @@ export default function Activity() {
                         </LinearGradient>
                     </View>
                     <View>
-                        <Text style={styles.statLabel}>Expense</Text>
-                        <Text style={styles.statValue}>${stats.expense.toFixed(2)}</Text>
+                        <Text style={styles.statLabel}>{t('activity.expense')}</Text>
+                        <Text style={styles.statValue}>₮{stats.expense.toFixed(2)}</Text>
                     </View>
                 </View>
             </Animated.View>
@@ -202,21 +204,21 @@ export default function Activity() {
                     onPress={() => setFilter('all')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
+                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>{t('activity.all')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.filterChip, filter === 'income' && styles.filterChipActive]}
                     onPress={() => setFilter('income')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>Income</Text>
+                    <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>{t('activity.income')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.filterChip, filter === 'expense' && styles.filterChipActive]}
                     onPress={() => setFilter('expense')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>Expense</Text>
+                    <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>{t('activity.expense')}</Text>
                 </TouchableOpacity>
             </Animated.View>
 
@@ -236,7 +238,7 @@ export default function Activity() {
                     ListEmptyComponent={
                         <View style={styles.center}>
                             <Ionicons name="receipt-outline" size={64} color="rgba(255,255,255,0.3)" />
-                            <Text style={styles.emptyText}>No transactions yet</Text>
+                            <Text style={styles.emptyText}>{t('activity.noTransactions')}</Text>
                         </View>
                     }
                 />

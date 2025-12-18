@@ -8,7 +8,10 @@ interface SuccessModalProps {
     onClose: () => void;
 }
 
+import { useTranslation } from 'react-i18next';
+
 export default function SuccessModal({ visible, amount, onClose }: SuccessModalProps) {
+    const { t } = useTranslation();
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const checkmarkAnim = useRef(new Animated.Value(0)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -82,14 +85,14 @@ export default function SuccessModal({ visible, amount, onClose }: SuccessModalP
                     </View>
 
                     {/* Success Message */}
-                    <Text style={styles.title}>Success!</Text>
-                    <Text style={styles.subtitle}>Top-up completed</Text>
+                    <Text style={styles.title}>{t('successModal.title')}</Text>
+                    <Text style={styles.subtitle}>{t('successModal.subtitle')}</Text>
 
                     {/* Amount Display with Gradient Effect */}
                     <View style={styles.amountSection}>
-                        <Text style={styles.amountLabel}>Amount Added</Text>
+                        <Text style={styles.amountLabel}>{t('successModal.amountLabel')}</Text>
                         <View style={styles.amountContainer}>
-                            <Text style={styles.currencySymbol}>$</Text>
+                            <Text style={styles.currencySymbol}>₮</Text>
                             <Text style={styles.amountText}>{amount.toFixed(2)}</Text>
                         </View>
                     </View>
@@ -98,7 +101,7 @@ export default function SuccessModal({ visible, amount, onClose }: SuccessModalP
                     <View style={styles.infoContainer}>
                         <Ionicons name="checkmark-circle" size={16} color="#10B981" />
                         <Text style={styles.infoText}>
-                            Funds are now available in your wallet
+                            {t('successModal.info')}
                         </Text>
                     </View>
 
@@ -108,7 +111,7 @@ export default function SuccessModal({ visible, amount, onClose }: SuccessModalP
                         onPress={onClose}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.buttonText}>Continue</Text>
+                        <Text style={styles.buttonText}>{t('successModal.button')}</Text>
                         <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
                     </TouchableOpacity>
                 </Animated.View>

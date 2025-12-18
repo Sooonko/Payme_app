@@ -1,0 +1,248 @@
+{
+    "profile": {
+        "title": "Profile",
+        "memberSince": "Member since {{date}}",
+        "guest": "Guest",
+        "editProfile": "Edit Profile",
+        "security": "Security",
+        "myCards": "My Cards",
+        "helpSupport": "Help & Support",
+        "settings": "Settings",
+        "logout": "Log Out",
+        "language": "Language",
+        "selectLanguage": "Select Language",
+        "cancel": "Cancel"
+    },
+    "landing": {
+        "title": "PAYME",
+        "subtitle": "Your Digital Wallet",
+        "tagline": "Fast, Secure & Simple Payment",
+        "getStarted": "Get Started",
+        "join": "Join thousands of happy users",
+        "features": {
+            "fastTransfer": {
+                "title": "Fast Transfers",
+                "desc": "Instant money transfers"
+            },
+            "securePayment": {
+                "title": "Secure Payments",
+                "desc": "Bank-level security"
+            },
+            "easyTopUp": {
+                "title": "Easy Top-up",
+                "desc": "Multiple payment options"
+            }
+        }
+    },
+    "login": {
+        "welcome": "Welcome Back!",
+        "subtitle": "Sign in to continue",
+        "email": "Email",
+        "password": "Password",
+        "button": "Log In",
+        "noAccount": "Don't have an account?",
+        "signup": "Sign up",
+        "errors": {
+            "emailRequired": "Email is required",
+            "emailInvalid": "Please enter a valid email address",
+            "passwordRequired": "Password is required",
+            "failed": "Login Failed",
+            "tryAgain": "Try Again",
+            "credentials": "Invalid credentials",
+            "network": "Failed to connect to server. Please check your internet connection."
+        }
+    },
+    "register": {
+        "title": "Create Account",
+        "subtitle": "Join us today!",
+        "name": "Full Name",
+        "email": "Email",
+        "phone": "Phone Number",
+        "password": "Password",
+        "button": "Sign Up",
+        "hasAccount": "Already have an account?",
+        "login": "Log in",
+        "errors": {
+            "nameRequired": "Full Name is required",
+            "emailRequired": "Email is required",
+            "emailInvalid": "Please enter a valid email address",
+            "phoneRequired": "Phone Number is required",
+            "phoneInvalid": "Phone number must be exactly 8 digits",
+            "passwordRequired": "Password is required",
+            "failed": "Registration Failed",
+            "generic": "Something went wrong",
+            "network": "Failed to connect to server. Please check your internet connection and ensure the server is running."
+        },
+        "success": {
+            "title": "Success",
+            "message": "Account created successfully!",
+            "ok": "OK"
+        }
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "back": "Back"
+    },
+    "home": {
+        "greeting": "Hello, Jane Doe!",
+        "balance": "Total Balance",
+        "myCards": "My Cards",
+        "default": "Default",
+        "quickActions": "Quick Actions",
+        "actions": {
+            "send": "Send",
+            "receive": "Receive",
+            "topUp": "Top Up",
+            "buy": "Buy"
+        },
+        "recentTransactions": "Recent Transactions",
+        "viewAll": "View all"
+    },
+    "wallet": {
+        "title": "Send Money",
+        "enterAmount": "Enter Amount",
+        "quickAmount": "Quick Amount",
+        "sendTo": "Send To",
+        "change": "Change",
+        "button": {
+            "confirm": "Confirm Transfer",
+            "select": "Select Recipient"
+        },
+        "errors": {
+            "invalidAmount": "Invalid Amount",
+            "enterValidAmount": "Please enter a valid amount.",
+            "failed": "Transaction failed"
+        },
+        "success": {
+            "title": "Transfer Successful!",
+            "to": "to",
+            "done": "Done"
+        }
+    },
+    "activity": {
+        "title": "Activity",
+        "income": "Income",
+        "expense": "Expense",
+        "all": "All",
+        "noTransactions": "No transactions yet"
+    },
+    "scan": {
+        "title": "Scan",
+        "subtitle": "QR Scanner coming soon..."
+    },
+    "topup": {
+        "title": "Top Up",
+        "enterAmount": "Enter Amount",
+        "quickAmount": "Quick Amount",
+        "paymentMethod": "Payment Method",
+        "methods": {
+            "bankCard": "Bank Card"
+        },
+        "button": {
+            "confirm": "Confirm Top Up",
+            "confirmPayment": "Confirm Payment"
+        },
+        "confirmation": {
+            "ready": "Ready to Complete",
+            "scan": "Scan the QR code to complete your payment",
+            "scanToPay": "Scan to Pay",
+            "qrUnavailable": "QR Code not available",
+            "amount": "Amount",
+            "status": "Status",
+            "help": "Click confirm after scanning the QR code or making payment"
+        }
+    },
+    "userSearch": {
+        "title": "Select Recipient",
+        "searchPlaceholder": "Search by name or phone",
+        "section": {
+            "results": "Search Results",
+            "quickSend": "Quick Send"
+        },
+        "noUsers": "No users found",
+        "quickSend": {
+            "phone": "Phone",
+            "email": "Email",
+            "qrCode": "QR Code"
+        }
+    },
+    "cards": {
+        "title": "My Cards",
+        "loading": "Loading cards...",
+        "empty": {
+            "title": "No cards added yet",
+            "subtitle": "Add a payment card to get started"
+        },
+        "button": "Add New Card",
+        "info": {
+            "title": "About Payment Cards",
+            "text": "Your payment cards are securely stored and encrypted. You can add multiple cards and choose which one to use for top-ups."
+        },
+        "actions": {
+            "edit": "Edit card feature coming soon",
+            "delete": "Delete Card",
+            "deleteConfirm": "Are you sure you want to delete this card?",
+            "deleteFeature": "Delete card feature coming soon"
+        },
+        "badge": "Default"
+    },
+    "addCard": {
+        "title": "Add Card",
+        "preview": {
+            "cardholder": "CARDHOLDER",
+            "expires": "EXPIRES"
+        },
+        "section": "Card Details",
+        "errors": {
+            "invalidCard": "Please enter a valid card number.",
+            "cardValidationFailed": "Card number failed validation check. Please verify the number.",
+            "invalidName": "Please enter a valid cardholder name.",
+            "invalidExpiry": "Please enter expiry date (MM/YY).",
+            "expired": "Card has expired or expiry date is invalid.",
+            "invalidCvv": "Please enter 3-digit CVV.",
+            "unsupported": "This card type is not supported.",
+            "failed": "Failed to add card",
+            "network": "Failed to connect to server. Please check your network connection."
+        },
+        "success": "Card added successfully!",
+        "placeholders": {
+            "number": "Card Number",
+            "name": "Cardholder Name",
+            "expiry": "MM/YY",
+            "cvv": "CVV"
+        },
+        "info": "Your card information is encrypted and securely stored. We use tokenization to protect your data.",
+        "button": "Add Card",
+        "buttonAdding": "Adding Card..."
+    },
+    "editProfile": {
+        "title": "Edit Profile",
+        "fields": {
+            "name": "Full Name",
+            "email": "Email",
+            "phone": "Phone Number",
+            "address": "Address"
+        },
+        "placeholders": {
+            "name": "Enter your name",
+            "email": "Enter your email",
+            "phone": "Enter your phone number",
+            "address": "Enter your address"
+        },
+        "button": "Save Changes",
+        "errors": {
+            "required": "Please fill in all required fields",
+            "failed": "Failed to update profile"
+        },
+        "success": "Profile updated successfully"
+    },
+    "successModal": {
+        "title": "Success!",
+        "subtitle": "Top-up completed",
+        "amountLabel": "Amount Added",
+        "info": "Funds are now available in your wallet",
+        "button": "Continue"
+    }
+}

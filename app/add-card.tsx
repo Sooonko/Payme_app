@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { addCard } from '../src/api/client';
 import { detectCardType, generateMockCardToken, getCardLast4, validateCardNumber, validateExpiryDate } from '../src/utils/cardUtils';
 
 export default function AddCard() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [cardNumber, setCardNumber] = useState('');
     const [cardholderName, setCardholderName] = useState('');
@@ -37,22 +39,22 @@ export default function AddCard() {
 
         // Validation
         if (!cardNumber || cleanedCardNumber.length < 13) {
-            Alert.alert('Invalid Card', 'Please enter a valid card number.');
+            Alert.alert(t('common.error'), t('addCard.errors.invalidCard'));
             return;
         }
 
         if (!validateCardNumber(cleanedCardNumber)) {
-            Alert.alert('Invalid Card', 'Card number failed validation check. Please verify the number.');
+            Alert.alert(t('common.error'), t('addCard.errors.cardValidationFailed'));
             return;
         }
 
         if (!cardholderName || cardholderName.trim().length < 2) {
-            Alert.alert('Invalid Name', 'Please enter a valid cardholder name.');
+            Alert.alert(t('common.error'), t('addCard.errors.invalidName'));
             return;
         }
 
         if (!expiryDate || expiryDate.length !== 5) {
-            Alert.alert('Invalid Expiry', 'Please enter expiry date (MM/YY).');
+            Alert.alert(t('common.error'), t('addCard.errors.invalidExpiry'));
             return;
         }
 
@@ -62,12 +64,12 @@ export default function AddCard() {
         const expiryYear = 2000 + parseInt(yearStr, 10); // Convert YY to YYYY
 
         if (!validateExpiryDate(expiryMonth, expiryYear)) {
-            Alert.alert('Invalid Expiry', 'Card has expired or expiry date is invalid.');
+            Alert.alert(t('common.error'), t('addCard.errors.expired'));
             return;
         }
 
         if (!cvv || cvv.length !== 3) {
-            Alert.alert('Invalid CVV', 'Please enter 3-digit CVV.');
+            Alert.alert(t('common.error'), t('addCard.errors.invalidCvv'));
             return;
         }
 
@@ -77,7 +79,7 @@ export default function AddCard() {
             const cardType = detectCardType(cleanedCardNumber);
 
             if (cardType === 'UNKNOWN') {
-                Alert.alert('Unsupported Card', 'This card type is not supported.');
+                Alert.alert(t('common.error'), t('addCard.errors.unsupported'));
                 setLoading(false);
                 return;
             }
@@ -106,15 +108,15 @@ export default function AddCard() {
                 setExpiryDate('');
                 setCvv('');
 
-                Alert.alert('Success', 'Card added successfully!', [
+                Alert.alert(t('common.success'), t('addCard.success'), [
                     { text: 'OK', onPress: () => router.push('/cards') }
                 ]);
             } else {
-                Alert.alert('Error', response.message || 'Failed to add card');
+                Alert.alert(t('common.error'), response.message || t('addCard.errors.failed'));
             }
         } catch (error) {
             console.error('Add card error:', error);
-            Alert.alert('Error', 'Failed to connect to server. Please check your network connection.');
+            Alert.alert(t('common.error'), t('addCard.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -132,7 +134,7 @@ export default function AddCard() {
                 <TouchableOpacity onPress={() => router.push('/cards')}>
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Add Card</Text>
+                <Text style={styles.headerTitle}>{t('addCard.title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -149,13 +151,13 @@ export default function AddCard() {
                         </Text>
                         <View style={styles.cardBottom}>
                             <View>
-                                <Text style={styles.cardLabel}>CARDHOLDER</Text>
+                                <Text style={styles.cardLabel}>{t('addCard.preview.cardholder')}</Text>
                                 <Text style={styles.cardValue}>
                                     {cardholderName || 'YOUR NAME'}
                                 </Text>
                             </View>
                             <View>
-                                <Text style={styles.cardLabel}>EXPIRES</Text>
+                                <Text style={styles.cardLabel}>{t('addCard.preview.expires')}</Text>
                                 <Text style={styles.cardValue}>
                                     {expiryDate || 'MM/YY'}
                                 </Text>
@@ -165,7 +167,7 @@ export default function AddCard() {
                 </View>
 
                 {/* Form Section */}
-                <Text style={styles.sectionTitle}>Card Details</Text>
+                <Text style={styles.sectionTitle}>{t('addCard.section')}</Text>
 
                 {/* Card Number */}
                 <View style={styles.inputContainer}>
@@ -173,7 +175,7 @@ export default function AddCard() {
                     <TextInput
                         value={cardNumber}
                         onChangeText={(text) => setCardNumber(formatCardNumberInput(text))}
-                        placeholder="Card Number"
+                        placeholder={t('addCard.placeholders.number')}
                         placeholderTextColor="rgba(255,255,255,0.4)"
                         keyboardType="numeric"
                         maxLength={19}
@@ -187,7 +189,7 @@ export default function AddCard() {
                     <TextInput
                         value={cardholderName}
                         onChangeText={setCardholderName}
-                        placeholder="Cardholder Name"
+                        placeholder={t('addCard.placeholders.name')}
                         placeholderTextColor="rgba(255,255,255,0.4)"
                         autoCapitalize="words"
                         style={styles.input}
@@ -201,7 +203,7 @@ export default function AddCard() {
                         <TextInput
                             value={expiryDate}
                             onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
-                            placeholder="MM/YY"
+                            placeholder={t('addCard.placeholders.expiry')}
                             placeholderTextColor="rgba(255,255,255,0.4)"
                             keyboardType="numeric"
                             maxLength={5}
@@ -213,7 +215,7 @@ export default function AddCard() {
                         <TextInput
                             value={cvv}
                             onChangeText={(text) => setCvv(text.replace(/\D/g, '').substring(0, 3))}
-                            placeholder="CVV"
+                            placeholder={t('addCard.placeholders.cvv')}
                             placeholderTextColor="rgba(255,255,255,0.4)"
                             keyboardType="numeric"
                             maxLength={3}
@@ -227,7 +229,7 @@ export default function AddCard() {
                 <View style={styles.infoBox}>
                     <Ionicons name="shield-checkmark" size={20} color="#4ADE80" />
                     <Text style={styles.infoText}>
-                        Your card information is encrypted and securely stored. We use tokenization to protect your data.
+                        {t('addCard.info')}
                     </Text>
                 </View>
 
@@ -238,10 +240,10 @@ export default function AddCard() {
                     disabled={loading}
                 >
                     {loading ? (
-                        <Text style={styles.addButtonText}>Adding Card...</Text>
+                        <Text style={styles.addButtonText}>{t('addCard.buttonAdding')}</Text>
                     ) : (
                         <>
-                            <Text style={styles.addButtonText}>Add Card</Text>
+                            <Text style={styles.addButtonText}>{t('addCard.button')}</Text>
                             <Ionicons name="checkmark-circle" size={20} color="white" style={{ marginLeft: 8 }} />
                         </>
                     )}

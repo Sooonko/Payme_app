@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardData, getCards } from '../src/api/client';
 
 export default function Cards() {
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams();
     const [cards, setCards] = useState<CardData[]>([]);
@@ -17,11 +19,11 @@ export default function Cards() {
             if (response.success) {
                 setCards(response.data);
             } else {
-                Alert.alert('Error', response.message || 'Failed to load cards');
+                Alert.alert(t('common.error'), response.message || t('cards.empty.title'));
             }
         } catch (error) {
             console.error('Load cards error:', error);
-            Alert.alert('Error', 'Failed to connect to server');
+            Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -45,16 +47,16 @@ export default function Cards() {
 
     const handleDeleteCard = (cardId: string) => {
         Alert.alert(
-            'Delete Card',
-            'Are you sure you want to delete this card?',
+            t('cards.actions.delete'),
+            t('cards.actions.deleteConfirm'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: t('cards.actions.delete'),
                     style: 'destructive',
                     onPress: () => {
                         // TODO: Implement delete card API
-                        Alert.alert('Info', 'Delete card feature coming soon');
+                        Alert.alert(t('common.info'), t('cards.actions.deleteFeature'));
                     }
                 }
             ]
@@ -85,7 +87,7 @@ export default function Cards() {
                 <TouchableOpacity onPress={handleBack}>
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>My Cards</Text>
+                <Text style={styles.headerTitle}>{t('cards.title')}</Text>
                 <TouchableOpacity onPress={() => router.push('/add-card')}>
                     <Ionicons name="add" size={24} color="white" />
                 </TouchableOpacity>
@@ -95,7 +97,7 @@ export default function Cards() {
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#A78BFA" />
-                        <Text style={styles.loadingText}>Loading cards...</Text>
+                        <Text style={styles.loadingText}>{t('cards.loading')}</Text>
                     </View>
                 ) : (
                     <>
@@ -113,7 +115,7 @@ export default function Cards() {
                                                     <Text style={styles.cardName}>{card.cardType}</Text>
                                                     {card.isDefault && (
                                                         <View style={styles.defaultBadge}>
-                                                            <Text style={styles.defaultBadgeText}>Default</Text>
+                                                            <Text style={styles.defaultBadgeText}>{t('cards.badge')}</Text>
                                                         </View>
                                                     )}
                                                 </View>
@@ -126,7 +128,7 @@ export default function Cards() {
                                         <View style={styles.cardActions}>
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => Alert.alert('Info', 'Edit card feature coming soon')}
+                                                onPress={() => Alert.alert(t('common.info'), t('cards.actions.edit'))}
                                             >
                                                 <Ionicons name="create-outline" size={20} color="#A78BFA" />
                                             </TouchableOpacity>
@@ -142,9 +144,9 @@ export default function Cards() {
                             ) : (
                                 <View style={styles.emptyState}>
                                     <Ionicons name="card-outline" size={64} color="rgba(255,255,255,0.3)" />
-                                    <Text style={styles.emptyStateText}>No cards added yet</Text>
+                                    <Text style={styles.emptyStateText}>{t('cards.empty.title')}</Text>
                                     <Text style={styles.emptyStateSubtext}>
-                                        Add a payment card to get started
+                                        {t('cards.empty.subtitle')}
                                     </Text>
                                 </View>
                             )}
@@ -155,15 +157,15 @@ export default function Cards() {
                                 onPress={() => router.push('/add-card')}
                             >
                                 <Ionicons name="add-circle-outline" size={24} color="#A78BFA" />
-                                <Text style={styles.addCardText}>Add New Card</Text>
+                                <Text style={styles.addCardText}>{t('cards.button')}</Text>
                             </TouchableOpacity>
                         </View>
 
                         {/* Info Section */}
                         <View style={styles.infoSection}>
-                            <Text style={styles.infoTitle}>About Payment Cards</Text>
+                            <Text style={styles.infoTitle}>{t('cards.info.title')}</Text>
                             <Text style={styles.infoText}>
-                                Your payment cards are securely stored and encrypted. You can add multiple cards and choose which one to use for top-ups.
+                                {t('cards.info.text')}
                             </Text>
                         </View>
                     </>
