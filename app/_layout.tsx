@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import "../global.css";
 
@@ -24,22 +24,22 @@ export default function RootLayout() {
             headerShown: false,
             tabBarShowLabel: false,
             tabBarActiveTintColor: '#A78BFA',
-            tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+            tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
             tabBarStyle: {
-              backgroundColor: 'rgba(22, 25, 46, 0.9)',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)', // More glass-like
               position: 'absolute',
               bottom: 25,
-              left: 20,
-              right: 20,
-              borderRadius: 35,
-              height: 70,
-              borderTopWidth: 0,
+              left: 60,
+              right: 60,
+              borderRadius: 30,
+              height: 75,
+              borderTopWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.25,
-              shadowRadius: 10,
+              shadowOpacity: 0.3,
+              shadowRadius: 20,
               elevation: 5,
-              paddingTop: 0, // Ensure icons are centered
             },
           }}
         >
@@ -47,8 +47,10 @@ export default function RootLayout() {
             name="home"
             options={{
               title: 'Home',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home" size={size} color={color} />
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+                  <Ionicons name="home" size={24} color={color} />
+                </View>
               ),
             }}
           />
@@ -56,8 +58,11 @@ export default function RootLayout() {
             name="wallet"
             options={{
               title: 'Wallet',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="wallet" size={size} color={color} />
+              href: null, // Hide from bottom bar
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+                  <Ionicons name="card-outline" size={24} color={color} />
+                </View>
               ),
             }}
           />
@@ -67,20 +72,22 @@ export default function RootLayout() {
               title: '',
               tabBarIcon: () => (
                 <View style={{
-                  backgroundColor: '#A78BFA',
-                  borderRadius: 28,
-                  width: 56,
-                  height: 56,
+                  backgroundColor: '#6366F1',
+                  borderRadius: 22,
+                  width: 60,
+                  height: 60,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginBottom: 20,
-                  shadowColor: '#A78BFA',
-                  shadowOffset: { width: 0, height: 4 },
+                  marginBottom: 35, // Lifted center button
+                  shadowColor: '#6366F1',
+                  shadowOffset: { width: 0, height: 8 },
                   shadowOpacity: 0.4,
-                  shadowRadius: 8,
-                  elevation: 6,
+                  shadowRadius: 12,
+                  elevation: 8,
+                  borderWidth: 4,
+                  borderColor: 'rgba(255,255,255,0.1)',
                 }}>
-                  <Ionicons name="scan" size={28} color="white" />
+                  <Ionicons name="qr-code-outline" size={30} color="white" />
                 </View>
               ),
             }}
@@ -89,8 +96,11 @@ export default function RootLayout() {
             name="activity"
             options={{
               title: 'Activity',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="bar-chart" size={size} color={color} />
+              href: null, // Hide from bottom bar
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+                  <Ionicons name="stats-chart-outline" size={24} color={color} />
+                </View>
               ),
             }}
           />
@@ -98,8 +108,10 @@ export default function RootLayout() {
             name="profile"
             options={{
               title: 'Profile',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="person" size={size} color={color} />
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+                  <Ionicons name="person-outline" size={24} color={color} />
+                </View>
               ),
             }}
           />
@@ -179,3 +191,17 @@ export default function RootLayout() {
     </NetworkProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  activeIconContainer: {
+    backgroundColor: 'rgba(167, 139, 250, 0.12)',
+  },
+});
+

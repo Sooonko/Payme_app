@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, FlatList, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,6 +10,7 @@ type FilterType = 'all' | 'income' | 'expense';
 
 export default function Activity() {
     const { t, i18n } = useTranslation();
+    const router = useRouter();
     const [transactions, setTransactions] = useState<TransactionHistoryResponse['data']>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -145,7 +146,15 @@ export default function Activity() {
                     }
                 ]}
             >
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="chevron-back" size={24} color="white" />
+                </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('activity.title')}</Text>
+                <View style={{ width: 44 }} /> {/* Spacer for centering if needed, but flex-start is better here */}
             </Animated.View>
 
             {/* Stats Card */}
@@ -252,14 +261,29 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingTop: 60,
         paddingBottom: 20,
         paddingHorizontal: 20,
+        gap: 15,
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     headerTitle: {
-        fontSize: 32,
+        fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
+        flex: 1,
+        textAlign: 'center',
     },
     statsCard: {
         flexDirection: 'row',
