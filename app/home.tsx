@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Animated, Dimensions, Easing, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Easing, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardData, getCards, getWallet } from '../src/api/client';
 
 const { width } = Dimensions.get('window');
@@ -19,6 +19,19 @@ export default function Home() {
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    // Banner State
+    const [bannerIndex, setBannerIndex] = useState(0);
+    const bannerItems = [
+        { id: 1, title: "Smart Payment", subtitle: "Pay your bills faster and safer with Payme.", image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop" },
+        { id: 2, title: "Global Transfer", subtitle: "Send money anywhere in the world instantly.", image: "https://images.unsplash.com/photo-1550565118-3d1428df732f?q=80&w=800&auto=format&fit=crop" },
+        { id: 3, title: "Credit Control", subtitle: "Manage your cards and loans in one place.", image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=800&auto=format&fit=crop" }
+    ];
+
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const index = Math.round(event.nativeEvent.contentOffset.x / (width - 40));
+        setBannerIndex(index);
+    };
     const slideAnim = useRef(new Animated.Value(30)).current;
     const floatAnim = useRef(new Animated.Value(0)).current;
 
@@ -104,8 +117,8 @@ export default function Home() {
             {/* Background Glows */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
                 <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#3B82F6', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#EC4899', width: 380, height: 380, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
             </View>
             <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
                 <Image
@@ -173,6 +186,51 @@ export default function Home() {
                         </Animated.View>
                     </BlurView>
                 </Animated.View>
+
+                {/* Banner Section */}
+                <View style={{ marginBottom: 20, alignItems: 'center' }}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.bannerContainer}
+                        style={{ width: width - 40, borderRadius: 16, overflow: 'hidden' }}
+                        pagingEnabled
+                        decelerationRate="fast"
+                        onScroll={handleScroll}
+                        scrollEventThrottle={16}
+                    >
+                        {bannerItems.map((item) => (
+                            <BlurView key={item.id} intensity={25} tint="light" style={styles.bannerItem}>
+                                <Image
+                                    source={{ uri: item.image }}
+                                    style={[StyleSheet.absoluteFillObject, { opacity: 0.7 }]}
+                                    contentFit="cover"
+                                />
+                                <View style={styles.bannerOverlay} />
+                                <View style={styles.bannerContent}>
+                                    <View style={styles.bannerTextContainer}>
+                                        <Text style={styles.bannerTitle}>{item.title}</Text>
+                                        <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+                                    </View>
+                                </View>
+                            </BlurView>
+                        ))}
+                    </ScrollView>
+
+                    {/* Pagination Dots */}
+                    <View style={styles.paginationContainer}>
+                        {bannerItems.map((_, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.paginationDot,
+                                    index === bannerIndex && styles.paginationDotActive
+                                ]}
+                            />
+                        ))}
+                    </View>
+                </View>
+
                 {ecosystemItems.map((item, index) => (
                     <Animated.View
                         key={item.id}
@@ -280,14 +338,14 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 10,
         marginBottom: 20,
-        borderRadius: 40,
+        borderRadius: 18,
         overflow: 'hidden',
     },
     totalBalanceCard: {
         backgroundColor: 'rgba(255,255,255,0.015)',
         padding: 24,
         alignItems: 'center',
-        borderWidth: 1.2,
+        borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
         borderRadius: 12,
     },
@@ -369,15 +427,15 @@ const styles = StyleSheet.create({
     ecosystemCardWrapper: {
         marginHorizontal: 20,
         marginBottom: 16,
-        borderRadius: 30,
+        borderRadius: 12,
         overflow: 'hidden',
     },
     ecosystemCard: {
         backgroundColor: 'rgba(255,255,255,0.05)',
         padding: 20,
-        borderWidth: 1.2,
+        borderWidth: 0.5,
         borderColor: 'rgba(255,255,255,0.25)',
-        borderRadius: 30,
+        borderRadius: 12,
     },
     ecosystemItemContent: {
         flexDirection: 'row',
@@ -392,7 +450,7 @@ const styles = StyleSheet.create({
     itemIconBox: {
         width: 56,
         height: 56,
-        borderRadius: 20,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
@@ -417,5 +475,64 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
+    },
+    bannerContainer: {
+        paddingHorizontal: 0,
+        paddingBottom: 0,
+    },
+    bannerItem: {
+        width: width - 40,
+        height: 160,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.25)',
+        overflow: 'hidden',
+    },
+    bannerOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+    },
+    bannerContent: {
+        flex: 1,
+        padding: 16,
+        justifyContent: 'flex-end',
+    },
+    bannerTextContainer: {
+        width: '100%',
+    },
+    bannerTitle: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 4,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+    },
+    bannerSubtitle: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 13,
+        lineHeight: 18,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+    },
+    paginationContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 5,
+    },
+    paginationDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    paginationDotActive: {
+        width: 20,
+        backgroundColor: 'white',
     },
 });
