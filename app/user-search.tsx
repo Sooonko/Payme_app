@@ -78,7 +78,10 @@ export default function UserSearch() {
                     }
                 ]}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButtonContainer}>
+                <TouchableOpacity
+                    onPress={() => params.from === 'scan' ? router.navigate('/scan') : router.back()}
+                    style={styles.backButtonContainer}
+                >
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('userSearch.title')}</Text>

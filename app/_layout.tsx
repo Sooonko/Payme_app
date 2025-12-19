@@ -28,21 +28,27 @@ export default function RootLayout() {
             tabBarActiveTintColor: '#FFFFFF',
             tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
             tabBarBackground: () => (
-              <BlurView
-                intensity={20}
-                tint="light"
-                style={{
-                  ...StyleSheet.absoluteFillObject,
-                  left: 30,
-                  right: 30,
-                  bottom: 10,
-                  borderRadius: 15,
-                  overflow: 'hidden',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  borderWidth: 1.2,
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                }}
-              />
+              <View style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                zIndex: 0
+              }}>
+                <BlurView
+                  intensity={20}
+                  tint="light"
+                  style={{
+                    ...StyleSheet.absoluteFillObject,
+                    left: 30,
+                    right: 30,
+                    bottom: 10,
+                    borderRadius: 15,
+                    overflow: 'hidden',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderWidth: 1.2,
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                  }}
+                />
+              </View>
             ),
             tabBarStyle: {
               backgroundColor: 'transparent',
@@ -56,6 +62,7 @@ export default function RootLayout() {
               borderWidth: 0,
               elevation: 0,
               paddingHorizontal: 40,
+              zIndex: 1000, // Ensure it's on top of everything
             },
           }}
         >

@@ -2,17 +2,36 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-type Mode = 'send' | 'request' | 'qr';
+type Mode = 'send' | 'qr' | 'invoice';
 
 export default function Scan() {
     const router = useRouter();
     const [amount, setAmount] = useState('0');
-    const [mode, setMode] = useState<Mode>('send');
+    const [isQRMode, setIsQRMode] = useState(false);
+
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            })
+        ]).start();
+    }, []);
 
     const handleKeyPress = (key: string) => {
         if (key === 'C') {
@@ -31,103 +50,117 @@ export default function Scan() {
         ['C', '0', 'backspace'],
     ];
 
-    const handleConfirm = () => {
-        if (amount !== '0' && mode === 'send') {
-            router.push({ pathname: '/user-search', params: { amount } });
+    const handleAction = (type: Mode) => {
+        if (type === 'send' || type === 'invoice') {
+            if (amount !== '0') {
+                router.push({ pathname: '/user-search', params: { amount, type, from: 'scan' } });
+            }
+        } else if (type === 'qr') {
+            setIsQRMode(!isQRMode);
         }
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
 
-            {/* HYPER-VIBRANT ULTIMATE MESH BACKGROUND */}
-            <View style={StyleSheet.absoluteFill}>
-                <LinearGradient
-                    colors={['#050510', '#0a0a25']}
-                    style={StyleSheet.absoluteFill}
-                />
-                {/* Neon Mesh Blobs - Precision HEX Saturation */}
-                <View style={[styles.meshBlob, { top: '2%', right: '-20%', backgroundColor: '#0066FF', width: 550, height: 550, opacity: 0.5 }]} />
-                <View style={[styles.meshBlob, { bottom: '10%', left: '-25%', backgroundColor: '#FF00CC', width: 650, height: 650, opacity: 0.45 }]} />
-                <View style={[styles.meshBlob, { top: '30%', left: '5%', backgroundColor: '#9900FF', width: 500, height: 500, opacity: 0.4 }]} />
-                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+            {/* Background Glows matching home.tsx */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
             </View>
 
-            {/* PRECISE TOP NAVIGATION GLASS PILL */}
-            <View style={styles.header}>
-                <BlurView intensity={35} tint="light" style={styles.navPill}>
-                    <TouchableOpacity
-                        style={[styles.navItem, mode === 'send' && styles.activeNavItem]}
-                        onPress={() => setMode('send')}
-                    >
-                        <Ionicons name="paper-plane" size={24} color={mode === 'send' ? '#fff' : 'rgba(255,255,255,0.4)'} />
-                    </TouchableOpacity>
-                    <View style={styles.navDivider} />
-                    <TouchableOpacity
-                        style={[styles.navItem, mode === 'request' && styles.activeNavItem]}
-                        onPress={() => setMode('request')}
-                    >
-                        <Ionicons name="receipt" size={24} color={mode === 'request' ? '#fff' : 'rgba(255,255,255,0.4)'} />
-                    </TouchableOpacity>
-                    <View style={styles.navDivider} />
-                    <TouchableOpacity
-                        style={[styles.navItem, mode === 'qr' && styles.activeNavItem]}
-                        onPress={() => setMode('qr')}
-                    >
-                        <Ionicons name="qr-code" size={24} color={mode === 'qr' ? '#fff' : 'rgba(255,255,255,0.4)'} />
-                    </TouchableOpacity>
-                </BlurView>
-            </View>
+            <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
-            {/* FLOATING AMOUNT - CLINICAL PRECISION */}
-            <View style={styles.amountArea}>
-                <Text style={styles.amountText}>{amount}</Text>
-                <Text style={styles.currencyText}>₮</Text>
-            </View>
-
-            {/* PREMIUM CRYSTAL KEYPAD */}
-            <View style={styles.keypadContainer}>
-                {keys.map((row, rowIndex) => (
-                    <View key={rowIndex} style={styles.keypadRow}>
-                        {row.map((key) => (
+                {isQRMode ? (
+                    <View style={styles.qrContainer}>
+                        <View style={styles.scanFrame}>
+                            <View style={styles.cornerTopLeft} />
+                            <View style={styles.cornerTopRight} />
+                            <View style={styles.cornerBottomLeft} />
+                            <View style={styles.cornerBottomRight} />
+                            <BlurView intensity={10} tint="light" style={styles.scanBlur} />
                             <TouchableOpacity
-                                key={key}
-                                style={styles.keyCircle}
-                                onPress={() => handleKeyPress(key)}
-                                activeOpacity={0.6}
+                                onPress={() => setIsQRMode(false)}
+                                style={styles.closeQR}
                             >
-                                <BlurView intensity={30} tint="light" style={styles.keyInner}>
-                                    {key === 'backspace' ? (
-                                        <Ionicons name="backspace-outline" size={26} color="white" />
-                                    ) : (
-                                        <Text style={styles.keyNumber}>{key}</Text>
-                                    )}
-                                </BlurView>
+                                <Ionicons name="close" size={30} color="white" />
                             </TouchableOpacity>
-                        ))}
+                            <Ionicons name="scan-outline" size={100} color="rgba(255,255,255,0.2)" />
+                        </View>
+                        <Text style={styles.scanTitle}>Scan QR Code</Text>
                     </View>
-                ))}
-            </View>
+                ) : (
+                    <>
+                        {/* CARD 1: AMOUNT DISPLAY */}
+                        <BlurView intensity={25} tint="light" style={styles.amountCard}>
+                            <Text style={styles.amountLabel}>Total Amount</Text>
+                            <View style={styles.amountRow}>
+                                <Text style={styles.amountText}>{amount}</Text>
+                                <Text style={styles.currencyText}>₮</Text>
+                            </View>
+                        </BlurView>
 
-            {/* NEON-INFUSED CONFIRM BUTTON */}
-            <View style={styles.footer}>
-                <TouchableOpacity
-                    style={styles.confirmShadow}
-                    onPress={handleConfirm}
-                    activeOpacity={0.8}
-                >
-                    <LinearGradient
-                        colors={['#FF00A0', '#D946EF']}
-                        style={styles.confirmButton}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                    >
-                        <Text style={styles.confirmText}>Confirm Payment</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
-        </View>
+                        {/* CARD 2: KEYBOARD */}
+                        <BlurView intensity={20} tint="light" style={styles.keyboardCard}>
+                            <View style={styles.keypadGrid}>
+                                {keys.map((row, rowIndex) => (
+                                    <View key={rowIndex} style={styles.keypadRow}>
+                                        {row.map((key) => (
+                                            <TouchableOpacity
+                                                key={key}
+                                                style={styles.keyButton}
+                                                onPress={() => handleKeyPress(key)}
+                                                activeOpacity={0.5}
+                                            >
+                                                {key === 'backspace' ? (
+                                                    <Ionicons name="backspace-outline" size={28} color="white" />
+                                                ) : (
+                                                    <Text style={styles.keyText}>{key}</Text>
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                ))}
+                            </View>
+                        </BlurView>
+                    </>
+                )}
+
+                {/* CARD 3: MODE ACTIONS */}
+                <BlurView intensity={30} tint="light" style={styles.actionCard}>
+                    <View style={styles.actionGrid}>
+                        <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('send')}>
+                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(79, 70, 229, 0.2)' }]}>
+                                <Ionicons name="paper-plane-outline" size={24} color="#818CF8" />
+                            </View>
+                            <Text style={styles.actionLabel}>Send</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('qr')}>
+                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(147, 51, 234, 0.2)' }]}>
+                                <Ionicons name="qr-code-outline" size={24} color="#C084FC" />
+                            </View>
+                            <Text style={styles.actionLabel}>QR Scan</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('invoice')}>
+                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(236, 72, 153, 0.2)' }]}>
+                                <Ionicons name="receipt-outline" size={24} color="#F472B6" />
+                            </View>
+                            <Text style={styles.actionLabel}>Invoice</Text>
+                        </TouchableOpacity>
+                    </View>
+                </BlurView>
+
+            </Animated.View>
+        </LinearGradient>
     );
 }
 
@@ -135,115 +168,193 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    meshBlob: {
+    glow: {
         position: 'absolute',
-        borderRadius: height,
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.25,
+        filter: 'blur(80px)',
     },
-    header: {
-        marginTop: height * 0.08,
-        alignItems: 'center',
+    content: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: height * 0.08,
+        paddingBottom: 110,
+        justifyContent: 'space-between',
     },
-    navPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 6,
-        borderRadius: 40,
-        backgroundColor: 'rgba(255, 255, 255, 0.07)',
-        borderWidth: 1.2,
-        borderColor: 'rgba(255, 255, 255, 0.25)',
+    amountCard: {
+        padding: 24,
+        borderRadius: 28,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: 'rgba(255,255,255,0.03)',
         overflow: 'hidden',
     },
-    navItem: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
+    amountLabel: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 8,
     },
-    activeNavItem: {
-        backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    },
-    navDivider: {
-        width: 1,
-        height: 22,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        marginHorizontal: 8,
-    },
-    amountArea: {
+    amountRow: {
         flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'flex-end',
-        marginTop: height * 0.04,
-        marginBottom: 20,
+        alignItems: 'baseline',
     },
     amountText: {
-        fontSize: 104,
-        fontWeight: '100',
+        fontSize: 64,
+        fontWeight: '200',
         color: 'white',
-        letterSpacing: -4,
-        textShadowColor: 'rgba(255, 255, 255, 0.5)',
+        textShadowColor: 'rgba(255, 255, 255, 0.3)',
         textShadowOffset: { width: 0, height: 0 },
-        textShadowRadius: 30,
+        textShadowRadius: 15,
     },
     currencyText: {
-        fontSize: 36,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginLeft: 10,
-        marginBottom: 28,
-        fontWeight: '100',
+        fontSize: 28,
+        color: 'rgba(255,255,255,0.7)',
+        marginLeft: 8,
+        fontWeight: '300',
     },
-    keypadContainer: {
-        flex: 1,
-        paddingHorizontal: 40,
+    keyboardCard: {
+        padding: 20,
+        borderRadius: 32,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        overflow: 'hidden',
+        height: height * 0.42,
         justifyContent: 'center',
+    },
+    keypadGrid: {
+        width: '100%',
     },
     keypadRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
+        justifyContent: 'space-around',
+        marginBottom: 10,
     },
-    keyCircle: {
-        width: 78,
-        height: 78,
-        borderRadius: 39,
+    keyButton: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    keyText: {
+        fontSize: 28,
+        color: 'white',
+        fontWeight: '300',
+    },
+    actionCard: {
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: 'rgba(255,255,255,0.05)',
         overflow: 'hidden',
     },
-    keyInner: {
+    actionGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+    },
+    actionItem: {
+        alignItems: 'center',
+        gap: 6,
+    },
+    actionIconPill: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    actionLabel: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
+        letterSpacing: 0.5,
+    },
+    // QR Mode Styles
+    qrContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.04)',
-        borderWidth: 1.2,
-        borderColor: 'rgba(255, 255, 255, 0.25)',
     },
-    keyNumber: {
-        fontSize: 34,
-        color: 'white',
-        fontWeight: '200',
-    },
-    footer: {
-        paddingHorizontal: 50,
-        paddingBottom: 110,
-    },
-    confirmShadow: {
-        shadowColor: '#FF00CC',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.9,
-        shadowRadius: 25,
-        elevation: 20,
-    },
-    confirmButton: {
-        height: 64,
-        borderRadius: 32,
+    scanFrame: {
+        width: 280,
+        height: 280,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        position: 'relative',
+        marginBottom: 30,
     },
-    confirmText: {
+    scanBlur: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+    scanTitle: {
         color: 'white',
         fontSize: 20,
-        fontWeight: '700',
-        letterSpacing: 1.5,
+        fontWeight: '600',
+    },
+    closeQR: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 10,
+    },
+    cornerTopLeft: {
+        position: 'absolute',
+        top: -2,
+        left: -2,
+        width: 40,
+        height: 40,
+        borderTopWidth: 4,
+        borderLeftWidth: 4,
+        borderColor: '#818CF8',
+        zIndex: 1,
+        borderTopLeftRadius: 20,
+    },
+    cornerTopRight: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 40,
+        height: 40,
+        borderTopWidth: 4,
+        borderRightWidth: 4,
+        borderColor: '#C084FC',
+        zIndex: 1,
+        borderTopRightRadius: 20,
+    },
+    cornerBottomLeft: {
+        position: 'absolute',
+        bottom: -2,
+        left: -2,
+        width: 40,
+        height: 40,
+        borderBottomWidth: 4,
+        borderLeftWidth: 4,
+        borderColor: '#F472B6',
+        zIndex: 1,
+        borderBottomLeftRadius: 20,
+    },
+    cornerBottomRight: {
+        position: 'absolute',
+        bottom: -2,
+        right: -2,
+        width: 40,
+        height: 40,
+        borderBottomWidth: 4,
+        borderRightWidth: 4,
+        borderColor: '#818CF8',
+        zIndex: 1,
+        borderBottomRightRadius: 20,
     },
 });
