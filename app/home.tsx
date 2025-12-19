@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1.2,
         borderColor: 'rgba(255,255,255,0.3)',
-        borderRadius: 40,
+        borderRadius: 12,
     },
     totalBalanceLabel: {
         color: 'rgba(255,255,255,0.5)',
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     glassCard: {
         width: '100%',
         height: 190,
-        borderRadius: 30,
+        borderRadius: 15,
         padding: 24,
         borderWidth: 1.8,
         borderColor: 'rgba(255,255,255,0.5)',

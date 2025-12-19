@@ -33,10 +33,10 @@ export default function RootLayout() {
                 tint="light"
                 style={{
                   ...StyleSheet.absoluteFillObject,
-                  left: 20,
-                  right: 20,
+                  left: 30,
+                  right: 30,
                   bottom: 10,
-                  borderRadius: 30,
+                  borderRadius: 15,
                   overflow: 'hidden',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   borderWidth: 1.2,
@@ -55,6 +55,7 @@ export default function RootLayout() {
               borderTopWidth: 0,
               borderWidth: 0,
               elevation: 0,
+              paddingHorizontal: 40,
             },
           }}
         >
@@ -64,19 +65,18 @@ export default function RootLayout() {
               title: 'Home',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="home" size={22} color={color} />
+                  <Ionicons name="home" size={24} color={color} />
                 </View>
               ),
             }}
           />
           <Tabs.Screen
-            name="wallet"
+            name="loan"
             options={{
-              title: 'Wallet',
-              href: null, // Hide from bottom bar
+              title: 'Loan',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="card-outline" size={24} color={color} />
+                  <Ionicons name="cash-outline" size={24} color={color} />
                 </View>
               ),
             }}
@@ -97,14 +97,12 @@ export default function RootLayout() {
             }}
           />
           <Tabs.Screen
-            name="activity"
+            name="news"
             options={{
-              title: 'Activity',
-              href: null, // Hide from bottom bar
-              tabBarStyle: { display: 'none' },
+              title: 'News',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="stats-chart-outline" size={24} color={color} />
+                  <Ionicons name="newspaper-outline" size={24} color={color} />
                 </View>
               ),
             }}
@@ -115,12 +113,25 @@ export default function RootLayout() {
               title: 'Profile',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-                  <Ionicons name="person-outline" size={22} color={color} />
+                  <Ionicons name="person-outline" size={24} color={color} />
                 </View>
               ),
             }}
           />
           {/* Hidden screens - no tab bar shown */}
+          <Tabs.Screen
+            name="wallet"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="activity"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
           <Tabs.Screen
             name="topup"
             options={{
@@ -198,12 +209,13 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   iconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 22,
-    marginTop: 26,
+    borderRadius: 20,
+    marginTop: 16,
+    marginBottom: 0,
   },
   activeIconContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
