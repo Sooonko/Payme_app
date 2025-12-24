@@ -18,8 +18,6 @@ interface LoanItem {
 const LOAN_DATA: LoanItem[] = [
     { id: '1', title: 'Богино хугацаат', duration: '-', amount: '10,000,000₮ хүртэл', buttonText: 'Зээл авах' },
     { id: '2', title: 'Урт хугацаат', duration: '3-18 сар', amount: '35,000,000₮ хүртэл', buttonText: 'Зээл авах' },
-    { id: '3', title: 'Оюутан зээл', duration: '-', amount: '500,000₮ хүртэл', buttonText: 'Зээл авах' },
-    { id: '4', title: 'Сургалтын төлбөр', duration: '3-18 сар', amount: '35,000,000₮ хүртэл', buttonText: 'Зээл авах' },
     { id: '5', title: 'Автомашины зээл', duration: '6-36 сар', amount: '35,000,000₮ хүртэл', buttonText: 'Зээл авах' },
     { id: '6', title: 'Итгэлцэл барьцаалсан зээл', duration: '-', amount: '120,000,000₮ хүртэл', buttonText: 'Зээл авах' },
 ];
@@ -139,14 +137,14 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
         color: 'white',
-        marginBottom: 8,
-        height: 45, // Enough for 2-3 lines
+        marginBottom: 4,
+        height: 40, // Reduced from 45
     },
     durationRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        marginBottom: 12,
+        marginBottom: 8, // Reduced from 12
     },
     durationText: {
         fontSize: 13,
