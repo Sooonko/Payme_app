@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -92,10 +93,11 @@ export default function Index() {
 
             {/* Logo/Header */}
             <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-                <View style={styles.logoContainer}>
-                    <Ionicons name="card" size={32} color="#A78BFA" />
-                </View>
-                <Text style={styles.brandTitle}>{t('landing.title')}</Text>
+                <Image
+                    source={require('../assets/logo/logo.png')}
+                    style={styles.landingLogo}
+                    contentFit="contain"
+                />
             </Animated.View>
 
             {/* Slider Content */}
@@ -156,15 +158,10 @@ export default function Index() {
                         onPress={() => router.push('/login')}
                         activeOpacity={0.8}
                     >
-                        <LinearGradient
-                            colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.buttonGradient}
-                        >
+                        <View style={styles.buttonContent}>
                             <Text style={styles.buttonText}>{t('landing.getStarted')}</Text>
                             <Ionicons name="arrow-forward" size={22} color="white" style={styles.buttonIcon} />
-                        </LinearGradient>
+                        </View>
                     </TouchableOpacity>
                 </Animated.View>
 
@@ -181,11 +178,13 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: height * 0.08,
-        gap: 12,
+        marginTop: height * 0.12,
+    },
+    landingLogo: {
+        width: 200,
+        height: 70,
     },
     logoContainer: {
         width: 50,
@@ -267,20 +266,20 @@ const styles = StyleSheet.create({
     },
     button: {
         borderRadius: 25,
-        overflow: 'hidden',
         width: '100%',
+        backgroundColor: '#A78BFA',
         elevation: 10,
         shadowColor: '#A78BFA',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.5,
         shadowRadius: 15,
         marginBottom: 24,
+        paddingVertical: 20,
     },
-    buttonGradient: {
+    buttonContent: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 20,
     },
     buttonText: {
         color: 'white',

@@ -14,6 +14,7 @@ export default function Home() {
     const { t } = useTranslation();
     const router = useRouter();
     const [balance, setBalance] = useState<number | null>(null);
+    const [isBalanceVisible, setIsBalanceVisible] = useState(true);
     const [loading, setLoading] = useState(true);
     const [cards, setCards] = useState<CardData[]>([]);
 
@@ -22,6 +23,7 @@ export default function Home() {
 
     // Banner State
     const [bannerIndex, setBannerIndex] = useState(0);
+    const [cardIndex, setCardIndex] = useState(0);
     const bannerItems = [
         { id: 1, title: "Smart Payment", subtitle: "Pay your bills faster and safer with Payme.", image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop" },
         { id: 2, title: "Global Transfer", subtitle: "Send money anywhere in the world instantly.", image: "https://images.unsplash.com/photo-1550565118-3d1428df732f?q=80&w=800&auto=format&fit=crop" },
@@ -31,6 +33,11 @@ export default function Home() {
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const index = Math.round(event.nativeEvent.contentOffset.x / (width - 40));
         setBannerIndex(index);
+    };
+
+    const handleCardScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const index = Math.round(event.nativeEvent.contentOffset.x / (width - 88));
+        setCardIndex(index);
     };
     const slideAnim = useRef(new Animated.Value(30)).current;
     const floatAnim = useRef(new Animated.Value(0)).current;
@@ -47,6 +54,11 @@ export default function Home() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleBalanceVisibility = () => {
+        setIsBalanceVisible(!isBalanceVisible);
+        loadWallet(); // Refetch as requested
     };
 
     const loadCards = async () => {
@@ -122,7 +134,7 @@ export default function Home() {
             </View>
             <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
                 <Image
-                    source={require('../assets/logo/Payme-Logo.svg')}
+                    source={require('../assets/logo/logo.png')}
                     style={styles.brandLogoImage}
                     contentFit="contain"
                 />
@@ -147,43 +159,94 @@ export default function Home() {
                     }
                 ]}>
                     <BlurView intensity={30} tint="light" style={styles.totalBalanceCard}>
-                        <Text style={styles.totalBalanceLabel}>{t('home.totalBalance')}</Text>
+                        <View style={styles.balanceHeader}>
+                            <Text style={styles.totalBalanceLabel}>{t('home.totalBalance')}</Text>
+                            <TouchableOpacity onPress={toggleBalanceVisibility} style={styles.visibilityBtn}>
+                                <Ionicons name={isBalanceVisible ? "eye-outline" : "eye-off-outline"} size={20} color="rgba(255,255,255,0.6)" />
+                            </TouchableOpacity>
+                        </View>
                         {loading ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text style={styles.totalBalanceAmount}>{`₮${(balance || 24500).toLocaleString()}`}</Text>
+                            <Text style={styles.totalBalanceAmount}>
+                                {isBalanceVisible ? `₮${(balance || 24500).toLocaleString()}` : '₮ ••••••'}
+                            </Text>
                         )}
-                        <Animated.View style={{
-                            width: '100%',
-                            transform: [{ translateY: floatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -15] }) }]
-                        }}>
-                            <BlurView intensity={70} tint="light" style={styles.glassCard}>
-                                <View style={styles.cardHeader}>
-                                    <Text style={styles.cardBrand}>payme</Text>
-                                    <Ionicons name="wifi-outline" size={22} color="white" style={{ transform: [{ rotate: '90deg' }] }} />
-                                </View>
-                                <Text style={styles.cardNumber}>••••  ••••  ••••  3876</Text>
-                                <View style={styles.cardFooter}>
-                                    <View>
-                                        <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                        <Text style={styles.cardHolderName}>JONSON</Text>
-                                    </View>
-                                    <View style={styles.cardFooterRight}>
-                                        <TouchableOpacity
-                                            style={styles.cardTopUpBtn}
-                                            onPress={() => router.push('/topup')}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Ionicons name="add-circle" size={28} color="white" />
-                                        </TouchableOpacity>
-                                        <View style={styles.mastercardLogo}>
-                                            <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.4)', left: 0 }]} />
-                                            <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.6)', left: 12 }]} />
+                        <View style={styles.cardSliderContainer}>
+                            <ScrollView
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                onScroll={handleCardScroll}
+                                scrollEventThrottle={16}
+                                decelerationRate="fast"
+                                contentContainerStyle={styles.cardContentContainer}
+                            >
+                                {/* Main Card (Front/Visa) */}
+                                <View style={styles.cardWrapper}>
+                                    <BlurView intensity={70} tint="light" style={styles.glassCard}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardBrand}>payme</Text>
+                                            <Ionicons name="wifi-outline" size={22} color="white" style={{ transform: [{ rotate: '90deg' }] }} />
                                         </View>
-                                    </View>
+                                        <Text style={styles.cardNumber}>••••  ••••  ••••  3876</Text>
+                                        <View style={styles.cardFooter}>
+                                            <View>
+                                                <Text style={styles.cardLabel}>CARD HOLDER</Text>
+                                                <Text style={styles.cardHolderName}>JONSON</Text>
+                                            </View>
+                                            <View style={styles.cardFooterRight}>
+                                                <TouchableOpacity
+                                                    style={styles.cardTopUpBtn}
+                                                    onPress={() => router.push('/topup')}
+                                                    activeOpacity={0.7}
+                                                >
+                                                    <Ionicons name="add-circle" size={28} color="white" />
+                                                </TouchableOpacity>
+                                                <View style={styles.mastercardLogo}>
+                                                    <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.4)', left: 0 }]} />
+                                                    <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.6)', left: 12 }]} />
+                                                </View>
+                                            </View>
+                                        </View>
+                                    </BlurView>
                                 </View>
-                            </BlurView>
-                        </Animated.View>
+
+                                {/* Loyalty Card */}
+                                <View style={styles.cardWrapper}>
+                                    <BlurView intensity={40} tint="light" style={[styles.glassCard, styles.loyaltyCardBack]}>
+                                        <View style={styles.loyaltyCardContent}>
+                                            <View>
+                                                <Text style={styles.loyaltyLabel}>LOYALTY CARD</Text>
+                                                <Text style={styles.loyaltyPoints}>2,450 pts</Text>
+                                            </View>
+                                            <View style={styles.loyaltyIconBox}>
+                                                <Ionicons name="medal" size={28} color="#FBBF24" />
+                                            </View>
+                                        </View>
+                                        <View style={styles.loyaltyCardFooter}>
+                                            <Text style={styles.loyaltyMemberName}>GOLD MEMBER</Text>
+                                            <View style={styles.loyaltyProgress}>
+                                                <View style={[styles.loyaltyProgressBar, { width: '70%' }]} />
+                                            </View>
+                                        </View>
+                                    </BlurView>
+                                </View>
+                            </ScrollView>
+
+                            {/* Card Pagination Dots */}
+                            <View style={styles.cardPagination}>
+                                {[0, 1].map((_, index) => (
+                                    <View
+                                        key={index}
+                                        style={[
+                                            styles.cardDot,
+                                            cardIndex === index && styles.cardDotActive
+                                        ]}
+                                    />
+                                ))}
+                            </View>
+                        </View>
                     </BlurView>
                 </Animated.View>
 
@@ -292,8 +355,8 @@ const styles = StyleSheet.create({
         paddingBottom: 15,
     },
     brandLogoImage: {
-        width: 160,
-        height: 40,
+        width: 130,
+        height: 50,
     },
     headerActions: {
         flexDirection: 'row',
@@ -354,13 +417,23 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
         letterSpacing: 1.5,
+    },
+    balanceHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
         marginBottom: 8,
+    },
+    visibilityBtn: {
+        padding: 4,
     },
     totalBalanceAmount: {
         fontSize: 42,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 25,
+        minWidth: 200,
+        textAlign: 'center',
     },
     glassCard: {
         width: '100%',
@@ -371,6 +444,61 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.5)',
         justifyContent: 'space-between',
         overflow: 'hidden',
+        zIndex: 2,
+    },
+    loyaltyCardBack: {
+        backgroundColor: 'rgba(251, 191, 36, 0.08)',
+        borderColor: 'rgba(251, 191, 36, 0.3)',
+        padding: 24,
+        opacity: 0.9,
+    },
+    loyaltyCardContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    loyaltyLabel: {
+        color: 'rgba(251, 191, 36, 0.8)',
+        fontSize: 10,
+        fontWeight: 'bold',
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    loyaltyPoints: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    loyaltyIconBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(251, 191, 36, 0.3)',
+    },
+    loyaltyCardFooter: {
+        marginTop: 'auto',
+    },
+    loyaltyMemberName: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 11,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    loyaltyProgress: {
+        height: 4,
+        width: '100%',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    loyaltyProgressBar: {
+        height: '100%',
+        backgroundColor: '#FBBF24',
+        borderRadius: 2,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -423,6 +551,36 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         borderRadius: 10,
+    },
+    cardSliderContainer: {
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    cardContentContainer: {
+        paddingHorizontal: 0,
+    },
+    cardWrapper: {
+        width: width - 88, // Fit perfectly inside totalBalanceCard padding
+        paddingHorizontal: 12,
+        alignItems: 'center',
+    },
+    cardPagination: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 15,
+    },
+    cardDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    cardDotActive: {
+        width: 18,
+        backgroundColor: 'white',
     },
     ecosystemCardWrapper: {
         marginHorizontal: 20,

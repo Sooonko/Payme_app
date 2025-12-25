@@ -3,18 +3,19 @@
 // Remove mock and uncomment API calls when backend is ready
 
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SuccessModal from '../components/SuccessModal';
-import { confirmTopUp, TopUpResponse } from '../src/api/client';
+import { confirmTopUp, initiateTopUp, TopUpResponse } from '../src/api/client';
 
 export default function TopUp() {
     const { t } = useTranslation();
     const router = useRouter();
-    const [amount, setAmount] = useState('');
+    const [amount, setAmount] = useState('0');
     const [loading, setLoading] = useState(false);
     const [transaction, setTransaction] = useState<TopUpResponse['data'] | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -24,7 +25,23 @@ export default function TopUp() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
 
-    const quickAmounts = ['10', '20', '50', '100'];
+    const quickAmounts = ['10000', '20000', '50000', '100000'];
+
+    const formatAmount = (val: string) => {
+        const cleanVal = val.replace(/[^0-9]/g, '');
+        if (!cleanVal) return '0';
+        const num = parseInt(cleanVal);
+        if (num > 5000000) return '5,000,000';
+        return num.toLocaleString();
+    };
+
+    const handleAmountChange = (val: string) => {
+        setAmount(formatAmount(val));
+    };
+
+    const getRawAmount = () => {
+        return parseFloat(amount.replace(/,/g, '')) || 0;
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -49,32 +66,21 @@ export default function TopUp() {
     );
 
     const handleTopUp = async () => {
-        if (!amount || parseFloat(amount) <= 0) {
+        const rawAmount = getRawAmount();
+        if (rawAmount <= 0) {
             Alert.alert(t('wallet.errors.invalidAmount'), t('wallet.errors.enterValidAmount'));
             return;
         }
 
         setLoading(true);
         try {
-            // TODO: Fix API integration - temporarily mocking success
-            // Uncomment below when API is ready
-            /*
-            const response = await initiateTopUp(parseFloat(amount));
+            const response = await initiateTopUp(rawAmount);
 
             if (response.success) {
                 setTransaction(response.data);
             } else {
                 Alert.alert(t('common.error'), response.message || 'Top-up initiation failed');
             }
-            */
-
-            // TEMPORARY: Mock success for testing
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-            const mockAmount = parseFloat(amount);
-            setSuccessAmount(mockAmount);
-            setShowSuccessModal(true);
-            setAmount('');
-
         } catch (error) {
             Alert.alert(t('common.error'), t('register.errors.network'));
         } finally {
@@ -87,15 +93,21 @@ export default function TopUp() {
 
         setLoading(true);
         try {
+            // Attempt real confirmation but proceed to success regardless of response for testing
             const response = await confirmTopUp(transaction.transactionId);
-            if (response.success) {
-                setSuccessAmount(transaction.amount);
-                setShowSuccessModal(true);
-            } else {
-                Alert.alert(t('common.error'), response.message || 'Failed to confirm top-up');
+
+            // Set success state regardless of response.success
+            setSuccessAmount(transaction.amount);
+            setShowSuccessModal(true);
+
+            if (!response.success) {
+                console.warn('Top-up confirmation API failed but proceeding to success UI as requested:', response.message);
             }
         } catch (error) {
-            Alert.alert(t('common.error'), t('register.errors.network'));
+            console.warn('Top-up confirmation network error but proceeding to success UI as requested');
+            // Still show success even on network error
+            setSuccessAmount(transaction.amount);
+            setShowSuccessModal(true);
         } finally {
             setLoading(false);
         }
@@ -105,16 +117,24 @@ export default function TopUp() {
         setShowSuccessModal(false);
         setTransaction(null);
         setAmount('');
+        router.push('/home');
     };
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
             <StatusBar barStyle="light-content" />
+
+            {/* Background Glows */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
+            </View>
 
             {/* Header */}
             <Animated.View
@@ -133,7 +153,7 @@ export default function TopUp() {
                 <View style={{ width: 40 }} />
             </Animated.View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
                 {!transaction ? (
                     <>
                         {/* Amount Input Card */}
@@ -146,58 +166,63 @@ export default function TopUp() {
                                 }
                             ]}
                         >
-                            <LinearGradient
-                                colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.amountCardGradient}
-                            >
-
+                            <BlurView intensity={20} tint="light" style={styles.amountCardBlur}>
+                                <Text style={styles.amountLabel}>{t('topup.confirmation.amount')}</Text>
                                 <View style={styles.amountContainer}>
-                                    <Text style={styles.currencySymbol}>₮</Text>
+                                    <View style={styles.currencyIconBox}>
+                                        <Text style={styles.currencySymbol}>₮</Text>
+                                    </View>
                                     <TextInput
                                         value={amount}
-                                        onChangeText={setAmount}
-                                        placeholder="0.00"
+                                        onChangeText={handleAmountChange}
+                                        placeholder="0"
                                         placeholderTextColor="rgba(255,255,255,0.3)"
                                         keyboardType="numeric"
                                         style={styles.amountInput}
+                                        selectionColor="#A78BFA"
                                     />
                                 </View>
-                            </LinearGradient>
+                                <View style={styles.focusLine} />
+                            </BlurView>
                         </Animated.View>
 
                         {/* Quick Amounts */}
                         <Animated.View
-                            style={{
-                                opacity: fadeAnim,
-                                transform: [{ translateY: slideAnim }],
-                            }}
+                            style={[
+                                styles.quickAmountsWrapper,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideAnim }],
+                                }
+                            ]}
                         >
-
                             <View style={styles.quickAmountsContainer}>
-                                {quickAmounts.map((amt) => (
-                                    <TouchableOpacity
-                                        key={amt}
-                                        style={[
-                                            styles.quickAmountChip,
-                                            amount === amt && styles.quickAmountChipActive
-                                        ]}
-                                        onPress={() => setAmount(amt)}
-                                        activeOpacity={0.7}
-                                    >
-                                        {amount === amt ? (
-                                            <LinearGradient
-                                                colors={['#A78BFA', '#8B5CF6']}
-                                                style={styles.quickAmountGradient}
-                                            >
-                                                <Text style={styles.quickAmountTextActive}>₮{amt}</Text>
-                                            </LinearGradient>
-                                        ) : (
-                                            <Text style={styles.quickAmountText}>₮{amt}</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                ))}
+                                {quickAmounts.map((amt) => {
+                                    const formattedAmt = parseInt(amt).toLocaleString();
+                                    const isActive = amount === formattedAmt;
+                                    return (
+                                        <TouchableOpacity
+                                            key={amt}
+                                            style={[
+                                                styles.quickAmountChip,
+                                                isActive && styles.quickAmountChipActive
+                                            ]}
+                                            onPress={() => setAmount(formattedAmt)}
+                                            activeOpacity={0.7}
+                                        >
+                                            {isActive ? (
+                                                <LinearGradient
+                                                    colors={['#A78BFA', '#8B5CF6']}
+                                                    style={styles.quickAmountGradient}
+                                                >
+                                                    <Text style={styles.quickAmountTextActive}>₮{formattedAmt}</Text>
+                                                </LinearGradient>
+                                            ) : (
+                                                <Text style={styles.quickAmountText}>₮{formattedAmt}</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                })}
                             </View>
                         </Animated.View>
 
@@ -212,21 +237,23 @@ export default function TopUp() {
                                 <Text style={styles.sectionTitle}>{t('topup.paymentMethod')}</Text>
                             </View>
                             <TouchableOpacity style={styles.paymentMethodCard} activeOpacity={0.7}>
-                                <View style={styles.methodLeft}>
-                                    <LinearGradient
-                                        colors={['#A78BFA', '#8B5CF6']}
-                                        style={styles.methodIconContainer}
-                                    >
-                                        <Ionicons name="card-outline" size={24} color="white" />
-                                    </LinearGradient>
-                                    <View style={styles.methodInfo}>
-                                        <Text style={styles.methodTitle}>{t('topup.methods.bankCard')}</Text>
-                                        <Text style={styles.methodSubtitle}>•••• •••• •••• 1234</Text>
+                                <BlurView intensity={15} tint="light" style={styles.methodBlur}>
+                                    <View style={styles.methodLeft}>
+                                        <LinearGradient
+                                            colors={['#A78BFA', '#8B5CF6']}
+                                            style={styles.methodIconContainer}
+                                        >
+                                            <Ionicons name="card" size={24} color="white" />
+                                        </LinearGradient>
+                                        <View style={styles.methodInfo}>
+                                            <Text style={styles.methodTitle}>{t('topup.methods.bankCard')}</Text>
+                                            <Text style={styles.methodSubtitle}>VISA Platinum •••• 4567</Text>
+                                        </View>
                                     </View>
-                                </View>
-                                <View style={styles.checkmarkBadge}>
-                                    <Ionicons name="checkmark" size={16} color="white" />
-                                </View>
+                                    <View style={styles.methodAction}>
+                                        <Ionicons name="swap-horizontal" size={20} color="rgba(255,255,255,0.6)" />
+                                    </View>
+                                </BlurView>
                             </TouchableOpacity>
                         </Animated.View>
 
@@ -241,9 +268,10 @@ export default function TopUp() {
                                 onPress={handleTopUp}
                                 disabled={loading}
                                 activeOpacity={0.8}
+                                style={styles.mainButtonWrapper}
                             >
                                 <LinearGradient
-                                    colors={['#34D399', '#10B981']}
+                                    colors={['#A78BFA', '#7C3AED']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
                                     style={styles.confirmButton}
@@ -253,7 +281,9 @@ export default function TopUp() {
                                     ) : (
                                         <>
                                             <Text style={styles.confirmButtonText}>{t('topup.button.confirm')}</Text>
-                                            <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                            <View style={styles.buttonIconBox}>
+                                                <Ionicons name="arrow-forward" size={18} color="white" />
+                                            </View>
                                         </>
                                     )}
                                 </LinearGradient>
@@ -273,7 +303,7 @@ export default function TopUp() {
                         {/* Header Section */}
                         <View style={styles.confirmHeader}>
                             <View style={styles.successIconContainer}>
-                                <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+                                <Ionicons name="shield-checkmark" size={32} color="#10B981" />
                             </View>
                             <Text style={styles.confirmHeaderText}>{t('topup.confirmation.ready')}</Text>
                             <Text style={styles.confirmSubtext}>{t('topup.confirmation.scan')}</Text>
@@ -282,7 +312,7 @@ export default function TopUp() {
                         {/* QR Code Card */}
                         <View style={styles.qrCard}>
                             <LinearGradient
-                                colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.05)']}
+                                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.02)']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.qrCardGradient}
@@ -296,7 +326,7 @@ export default function TopUp() {
                                         />
                                     ) : (
                                         <View style={styles.placeholderQr}>
-                                            <Ionicons name="qr-code-outline" size={100} color="rgba(167, 139, 250, 0.4)" />
+                                            <Ionicons name="qr-code" size={80} color="rgba(167, 139, 250, 0.3)" />
                                             <Text style={styles.placeholderText}>{t('topup.confirmation.qrUnavailable')}</Text>
                                         </View>
                                     )}
@@ -309,7 +339,7 @@ export default function TopUp() {
                         <View style={styles.detailsCard}>
                             <View style={styles.detailRow}>
                                 <Text style={styles.detailLabel}>{t('topup.confirmation.amount')}</Text>
-                                <Text style={styles.detailAmount}>₮{transaction.amount.toFixed(2)}</Text>
+                                <Text style={styles.detailAmount}>₮{transaction.amount.toLocaleString()}</Text>
                             </View>
 
                             <View style={styles.divider} />
@@ -328,9 +358,10 @@ export default function TopUp() {
                             onPress={handleConfirm}
                             disabled={loading}
                             activeOpacity={0.8}
+                            style={styles.mainButtonWrapper}
                         >
                             <LinearGradient
-                                colors={['#34D399', '#10B981']}
+                                colors={['#10B981', '#059669']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.confirmButton}
@@ -340,7 +371,9 @@ export default function TopUp() {
                                 ) : (
                                     <>
                                         <Text style={styles.confirmButtonText}>{t('topup.button.confirmPayment')}</Text>
-                                        <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
+                                        <View style={styles.buttonIconBox}>
+                                            <Ionicons name="checkmark" size={18} color="white" />
+                                        </View>
                                     </>
                                 )}
                             </LinearGradient>
@@ -367,6 +400,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    glow: {
+        position: 'absolute',
+        borderRadius: 200,
+        filter: 'blur(80px)',
+    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -376,126 +414,141 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.15)',
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontWeight: '800',
         color: 'white',
+        letterSpacing: 0.5,
     },
     content: {
         flex: 1,
         paddingHorizontal: 20,
     },
     amountCard: {
-        marginTop: 20,
+        marginTop: 10,
         marginBottom: 24,
-        borderRadius: 24,
+        borderRadius: 30,
         overflow: 'hidden',
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: 'rgba(255, 255, 255, 0.2)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.03)',
     },
-    amountCardGradient: {
-        padding: 24,
-        borderRadius: 24,
+    amountCardBlur: {
+        padding: 30,
+        alignItems: 'center',
     },
-
+    amountLabel: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.5)',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+        marginBottom: 15,
+    },
     amountContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        width: '100%',
+    },
+    currencyIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     currencySymbol: {
-        fontSize: 36,
+        fontSize: 24,
         color: '#A78BFA',
         fontWeight: 'bold',
-        marginRight: 8,
     },
     amountInput: {
-        fontSize: 44,
+        fontSize: 48,
         color: 'white',
         fontWeight: 'bold',
-        minWidth: 120,
+        minWidth: 150,
         textAlign: 'center',
+        letterSpacing: 1,
     },
-
+    focusLine: {
+        width: 60,
+        height: 4,
+        backgroundColor: '#A78BFA',
+        borderRadius: 2,
+        marginTop: 15,
+        opacity: 0.8,
+    },
+    quickAmountsWrapper: {
+        marginBottom: 32,
+    },
     quickAmountsContainer: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
-        marginBottom: 28,
-        gap: 8,
+        gap: 10,
     },
     quickAmountChip: {
-        flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
+        width: '48%',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        paddingVertical: 18,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         alignItems: 'center',
         overflow: 'hidden',
     },
     quickAmountChipActive: {
-        backgroundColor: 'transparent',
         borderColor: '#A78BFA',
-        borderWidth: 2,
+        backgroundColor: 'transparent',
     },
     quickAmountGradient: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 14,
-        width: '100%',
-        alignItems: 'center',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
+        alignItems: 'center',
     },
     quickAmountText: {
-        color: 'rgba(255, 255, 255, 0.9)',
+        color: 'rgba(255, 255, 255, 0.7)',
         fontWeight: '600',
-        fontSize: 15,
+        fontSize: 16,
     },
     quickAmountTextActive: {
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: 16,
     },
     sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '800',
         color: 'white',
+        letterSpacing: 0.5,
     },
     paymentMethodCard: {
+        borderRadius: 24,
+        overflow: 'hidden',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        marginBottom: 35,
+    },
+    methodBlur: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 32,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
+        padding: 20,
     },
     methodLeft: {
         flexDirection: 'row',
@@ -503,108 +556,125 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     methodIconContainer: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
+        width: 56,
+        height: 56,
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
+        marginRight: 16,
+        shadowColor: '#A78BFA',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
     },
     methodInfo: {
         flex: 1,
     },
     methodTitle: {
         color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 17,
+        fontWeight: '700',
         marginBottom: 4,
     },
     methodSubtitle: {
-        color: 'rgba(255,255,255,0.6)',
+        color: 'rgba(255,255,255,0.5)',
         fontSize: 14,
+        fontWeight: '500',
     },
-    checkmarkBadge: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: '#A78BFA',
+    methodAction: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    mainButtonWrapper: {
+        borderRadius: 22,
+        overflow: 'hidden',
+        shadowColor: '#A78BFA',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 15,
+        elevation: 8,
     },
     confirmButton: {
         flexDirection: 'row',
-        borderRadius: 25,
-        paddingVertical: 18,
+        paddingVertical: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 32,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
+        gap: 12,
     },
     confirmButtonText: {
         color: 'white',
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    buttonIconBox: {
+        width: 30,
+        height: 30,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     confirmationContainer: {
         alignItems: 'stretch',
-        marginTop: 12,
-        paddingHorizontal: 4,
+        marginTop: 10,
     },
     confirmHeader: {
         alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 24,
+        marginBottom: 30,
     },
     successIconContainer: {
-        marginBottom: 16,
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        borderWidth: 2,
+        borderColor: 'rgba(16, 185, 129, 0.3)',
     },
     confirmHeaderText: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontWeight: '800',
         color: 'white',
-        marginBottom: 8,
+        marginBottom: 10,
     },
     confirmSubtext: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 15,
+        color: 'rgba(255, 255, 255, 0.5)',
         textAlign: 'center',
+        lineHeight: 22,
     },
     qrCard: {
-        borderRadius: 24,
-        marginBottom: 20,
+        borderRadius: 30,
+        marginBottom: 24,
         overflow: 'hidden',
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: 'rgba(255, 255, 255, 0.2)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.03)',
     },
     qrCardGradient: {
-        padding: 20,
+        padding: 25,
         alignItems: 'center',
     },
     qrContainer: {
-        width: 220,
-        height: 220,
+        width: 240,
+        height: 240,
         backgroundColor: 'white',
-        borderRadius: 16,
+        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
-        overflow: 'hidden',
-        shadowColor: '#A78BFA',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
+        marginBottom: 20,
+        padding: 20,
+        shadowColor: 'white',
+        shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowRadius: 20,
     },
     qrCode: {
         width: '100%',
@@ -613,77 +683,83 @@ const styles = StyleSheet.create({
     placeholderQr: {
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(30, 34, 56, 0.4)',
         width: '100%',
         height: '100%',
     },
     placeholderText: {
-        color: 'rgba(167, 139, 250, 0.5)',
+        color: 'rgba(30,34,56,0.5)',
         marginTop: 12,
-        fontSize: 13,
+        fontSize: 14,
+        fontWeight: '600',
     },
     qrLabel: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontWeight: '600',
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.4)',
+        fontWeight: '800',
         textTransform: 'uppercase',
-        letterSpacing: 1,
+        letterSpacing: 2,
     },
     detailsCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 24,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 30,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     detailRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 10,
     },
     detailLabel: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 15,
+        color: 'rgba(255, 255, 255, 0.5)',
         fontWeight: '500',
     },
     detailAmount: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: '800',
         color: 'white',
     },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        marginVertical: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        marginVertical: 6,
     },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(167, 139, 250, 0.2)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        gap: 6,
+        backgroundColor: 'rgba(167, 139, 250, 0.15)',
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 14,
+        gap: 8,
     },
     statusDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: '#A78BFA',
+        shadowColor: '#A78BFA',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
     },
     statusText: {
-        fontSize: 13,
+        fontSize: 14,
         color: '#A78BFA',
-        fontWeight: '600',
+        fontWeight: '800',
         textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     helpText: {
-        fontSize: 12,
-        color: 'rgba(255, 255, 255, 0.5)',
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.4)',
         textAlign: 'center',
-        marginTop: 16,
+        marginTop: 20,
         fontStyle: 'italic',
+        lineHeight: 20,
     },
 });

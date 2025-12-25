@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -18,20 +18,24 @@ export default function Scan() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
 
-    useEffect(() => {
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 800,
-                useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 800,
-                useNativeDriver: true,
-            })
-        ]).start();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            setAmount('0');
+
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        }, [])
+    );
 
     const handleKeyPress = (key: string) => {
         if (key === 'C') {
@@ -39,7 +43,11 @@ export default function Scan() {
         } else if (key === 'backspace') {
             setAmount(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
         } else {
-            setAmount(prev => (prev === '0' ? key : (prev + key).substring(0, 9)));
+            setAmount(prev => {
+                const nextValue = prev === '0' ? key : prev + key;
+                if (parseInt(nextValue) > 5000000) return prev;
+                return nextValue;
+            });
         }
     };
 
@@ -102,7 +110,7 @@ export default function Scan() {
                         <BlurView intensity={25} tint="light" style={styles.amountCard}>
                             <Text style={styles.amountLabel}>Total Amount</Text>
                             <View style={styles.amountRow}>
-                                <Text style={styles.amountText}>{amount}</Text>
+                                <Text style={styles.amountText}>{parseInt(amount).toLocaleString()}</Text>
                                 <Text style={styles.currencyText}>₮</Text>
                             </View>
                         </BlurView>

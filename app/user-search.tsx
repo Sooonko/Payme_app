@@ -128,7 +128,7 @@ export default function UserSearch() {
                                         key={user.userId}
                                         style={styles.contactCard}
                                         onPress={() => router.push({
-                                            pathname: '/wallet',
+                                            pathname: '/transfer-confirm',
                                             params: {
                                                 userId: user.userId,
                                                 name: user.name,

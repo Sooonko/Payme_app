@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,9 +23,21 @@ const LOAN_DATA: LoanItem[] = [
     { id: '6', title: 'Итгэлцэл барьцаалсан зээл', duration: '-', amount: '120,000,000₮ хүртэл', buttonText: 'Зээл авах' },
 ];
 
+const BANNER_DATA = [
+    { id: 1, title: "Зээлийн эрхээ нэмээрэй", subtitle: "Таны зээлийн эрх 10,000,000₮ хүртэл нэмэгдэх боломжтой.", image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop" },
+    { id: 2, title: "Шуурхай зээл", subtitle: "5 минутын дотор зээлээ аваарай.", image: "https://images.unsplash.com/photo-1579621970795-87f967b16cf8?q=80&w=800&auto=format&fit=crop" },
+    { id: 3, title: "Ухаалаг санхүү", subtitle: "Бага хүүтэй, уян хатан нөхцөлтэй зээлүүд.", image: "https://images.unsplash.com/photo-1565514020179-026b92b84bb6?q=80&w=800&auto=format&fit=crop" }
+];
+
 export default function Loan() {
     const router = useRouter();
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const [bannerIndex, setBannerIndex] = useState(0);
+
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const index = Math.round(event.nativeEvent.contentOffset.x / (width - 40));
+        setBannerIndex(index);
+    };
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -73,6 +86,50 @@ export default function Loan() {
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    {/* Banner Section */}
+                    <View style={styles.bannerWrapper}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.bannerContainer}
+                            style={styles.bannerScroll}
+                            pagingEnabled
+                            decelerationRate="fast"
+                            onScroll={handleScroll}
+                            scrollEventThrottle={16}
+                        >
+                            {BANNER_DATA.map((item) => (
+                                <BlurView key={item.id} intensity={25} tint="light" style={styles.bannerItem}>
+                                    <Image
+                                        source={{ uri: item.image }}
+                                        style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]}
+                                        contentFit="cover"
+                                    />
+                                    <View style={styles.bannerOverlay} />
+                                    <View style={styles.bannerContent}>
+                                        <View style={styles.bannerTextContainer}>
+                                            <Text style={styles.bannerTitle}>{item.title}</Text>
+                                            <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+                                        </View>
+                                    </View>
+                                </BlurView>
+                            ))}
+                        </ScrollView>
+
+                        {/* Pagination Dots */}
+                        <View style={styles.paginationContainer}>
+                            {BANNER_DATA.map((_, index) => (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.paginationDot,
+                                        index === bannerIndex && styles.paginationDotActive
+                                    ]}
+                                />
+                            ))}
+                        </View>
+                    </View>
+
                     <View style={styles.grid}>
                         {LOAN_DATA.map((item) => (
                             <View key={item.id} style={styles.cardWrapper}>
@@ -174,5 +231,72 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 13,
         fontWeight: '700',
+    },
+    bannerWrapper: {
+        marginBottom: 25,
+        alignItems: 'center',
+    },
+    bannerScroll: {
+        width: width - 30,
+        borderRadius: 24,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+    },
+    bannerContainer: {
+        paddingHorizontal: 0,
+    },
+    bannerItem: {
+        width: width - 32,
+        height: 160,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        overflow: 'hidden',
+    },
+    bannerOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    bannerContent: {
+        flex: 1,
+        padding: 20,
+        justifyContent: 'flex-end',
+    },
+    bannerTextContainer: {
+        width: '100%',
+    },
+    bannerTitle: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 6,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+    },
+    bannerSubtitle: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 13,
+        lineHeight: 18,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
+    },
+    paginationContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+    },
+    paginationDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    paginationDotActive: {
+        width: 20,
+        backgroundColor: 'white',
     },
 });

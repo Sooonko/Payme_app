@@ -281,7 +281,6 @@ export default function Login() {
                                 <Ionicons name="lock-closed" size={48} color="#A78BFA" />
                             </Animated.View>
                         </Animated.View>
-                        <Text style={styles.title}>{t('login.welcome')}</Text>
                         <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
                     </View>
 

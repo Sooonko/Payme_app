@@ -207,6 +207,13 @@ export default function RootLayout() {
               tabBarStyle: { display: 'none' },
             }}
           />
+          <Tabs.Screen
+            name="transfer-confirm"
+            options={{
+              href: null,
+              tabBarStyle: { display: 'none' },
+            }}
+          />
         </Tabs>
         <StatusBar style="auto" />
       </ThemeProvider>
