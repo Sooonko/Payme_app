@@ -517,22 +517,25 @@ export interface LoanProduct {
     id: string;
     name: string;
     description: string;
+    interestRateMonthly: number;
+    penaltyRateDaily: number;
     minAmount: number;
     maxAmount: number;
-    interestRate: number;
-    minTermMonths: number;
-    maxTermMonths: number;
+    minTenorMonths: number;
+    maxTenorMonths: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface LoanApplication {
-    id: string;
+    applicationId: string;
     userId: string;
-    loanProduct: LoanProduct;
-    maxEligibleAmount: number;
+    productId: string;
     requestedAmount: number;
-    requestedTermMonths: number;
-    creditScore: number;
-    status: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISBURSED';
+    maxEligibleAmount: number;
+    tenorMonths: number;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISBURSED';
+    message: string;
     createdAt: string;
 }
 
@@ -548,7 +551,7 @@ export interface ActiveLoan {
 export interface ApplyLoanRequest {
     productId: string;
     requestedAmount: number;
-    requestedTermMonths: number;
+    tenorMonths: number;
 }
 
 export interface GenericResponse<T = any> {
@@ -562,6 +565,26 @@ export type ApplyLoanResponse = GenericResponse<LoanApplication>;
 export type DisburseLoanResponse = GenericResponse<ActiveLoan>;
 export type RepayLoanResponse = GenericResponse<null>;
 export type GetMyLoansResponse = GenericResponse<ActiveLoan[]>;
+export type GetLoanProductsResponse = GenericResponse<LoanProduct[]>;
+
+export const getLoanProducts = async (): Promise<GetLoanProductsResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/loans/products`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Get Loan Products error:', error);
+        throw error;
+    }
+};
 
 export const applyForLoan = async (data: ApplyLoanRequest): Promise<ApplyLoanResponse> => {
     try {

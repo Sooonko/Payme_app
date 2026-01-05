@@ -6,28 +6,14 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Dimensions, Modal, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { ActiveLoan, applyForLoan, disburseLoan, getMyLoans, LoanApplication, repayLoan } from '../src/api/client';
+import { ActiveLoan, applyForLoan, disburseLoan, getLoanProducts, getMyLoans, LoanApplication, LoanProduct, repayLoan } from '../src/api/client';
 
 const { width, height } = Dimensions.get('window');
 
-interface LoanProductUI {
-    id: string;
-    title: string;
-    duration: string;
-    amount: string;
-    buttonText: string;
-    productId: string; // Real UUID for API
-}
-
-const LOAN_DATA: LoanProductUI[] = [
-    { id: '1', title: 'Богино хугацаат', duration: '-', amount: '10,000,000₮ хүртэл', buttonText: 'Зээл авах', productId: 'p1p2p3p4-p5p6-p7p8-p9p0-p1p2p3p4p5p6' },
-    { id: '2', title: 'Урт хугацаат', duration: '3-18 сар', amount: '35,000,000₮ хүртэл', buttonText: 'Зээл авах', productId: 'p1p2p3p4-p5p6-p7p8-p9p0-p1p2p3p4p5p7' },
-    { id: '5', title: 'Автомашины зээл', duration: '6-36 сар', amount: '35,000,000₮ хүртэл', buttonText: 'Зээл авах', productId: 'p1p2p3p4-p5p6-p7p8-p9p0-p1p2p3p4p5p8' },
-    { id: '6', title: 'Итгэлцэл барьцаалсан зээл', duration: '-', amount: '120,000,000₮ хүртэл', buttonText: 'Зээл авах', productId: 'p1p2p3p4-p5p6-p7p8-p9p0-p1p2p3p4p5p9' },
-];
+// LOAN_DATA removed - replaced by API call
 
 const BANNER_DATA = [
-    { id: 1, title: "Зээлийн эрхээ нэмээрэй", subtitle: "Таны зээлийн эрх 10,000,000₮ хүртэл нэмэгдэх боломжтой.", image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop" },
+    { id: 1, title: "Зээлийн эрхээ нэмээрэй", subtitle: "Таны зээлийн эрх 10,000,000₮ нэмэгдэх боломжтой.", image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop" },
     { id: 2, title: "Шуурхай зээл", subtitle: "5 минутын дотор зээлээ аваарай.", image: "https://images.unsplash.com/photo-1579621970795-87f967b16cf8?q=80&w=800&auto=format&fit=crop" },
     { id: 3, title: "Ухаалаг санхүү", subtitle: "Бага хүүтэй, уян хатан нөхцөлтэй зээлүүд.", image: "https://images.unsplash.com/photo-1565514020179-026b92b84bb6?q=80&w=800&auto=format&fit=crop" }
 ];
@@ -39,13 +25,12 @@ export default function Loan() {
 
     // State
     const [loans, setLoans] = useState<ActiveLoan[]>([]);
+    const [loanProducts, setLoanProducts] = useState<LoanProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [bannerIndex, setBannerIndex] = useState(0);
-
-    // Apply Modal State
     const [showApplyModal, setShowApplyModal] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<LoanProductUI | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<LoanProduct | null>(null);
     const [requestedAmount, setRequestedAmount] = useState('');
     const [requestedTerm, setRequestedTerm] = useState('12');
 
@@ -59,12 +44,24 @@ export default function Loan() {
 
     useEffect(() => {
         fetchLoans();
+        fetchProducts();
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 800,
             useNativeDriver: true,
         }).start();
     }, []);
+
+    const fetchProducts = async () => {
+        try {
+            const response = await getLoanProducts();
+            if (response.success) {
+                setLoanProducts(response.data);
+            }
+        } catch (error) {
+            console.error('Fetch loan products error:', error);
+        }
+    };
 
     const fetchLoans = async () => {
         setLoading(true);
@@ -91,9 +88,9 @@ export default function Loan() {
         setActionLoading(true);
         try {
             const response = await applyForLoan({
-                productId: selectedProduct.productId,
+                productId: selectedProduct.id,
                 requestedAmount: amount,
-                requestedTermMonths: parseInt(requestedTerm),
+                tenorMonths: parseInt(requestedTerm),
             });
 
             if (response.success) {
@@ -113,7 +110,7 @@ export default function Loan() {
 
         setActionLoading(true);
         try {
-            const response = await disburseLoan(application.id);
+            const response = await disburseLoan(application.applicationId);
             if (response.success) {
                 Alert.alert('Амжилттай', 'Зээл олгогдлоо. Таны хэтэвчинд мөнгө орсон байна.');
                 setShowApplyModal(false);
@@ -165,25 +162,34 @@ export default function Loan() {
         setBannerIndex(index);
     };
 
-    const renderLoanCard = (item: LoanProductUI) => (
+    const renderLoanCard = (item: LoanProduct) => (
         <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <View style={styles.durationRow}>
-                <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.6)" />
-                <Text style={styles.durationText}>{item.duration}</Text>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+
+            <View style={styles.infoRow}>
+                <View style={styles.durationRow}>
+                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.6)" />
+                    <Text style={styles.durationText}>{item.minTenorMonths}-{item.maxTenorMonths} сар</Text>
+                </View>
+                <View style={styles.interestRow}>
+                    <Ionicons name="trending-up-outline" size={14} color="#10B981" />
+                    <Text style={styles.interestText}>{item.interestRateMonthly}%</Text>
+                </View>
             </View>
 
             <Text style={styles.amountLabel}>Боломжит хэмжээ</Text>
-            <Text style={styles.amountText}>{item.amount}</Text>
+            <Text style={styles.amountText}>{item.maxAmount.toLocaleString()}₮</Text>
 
             <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => {
                     setSelectedProduct(item);
+                    setRequestedAmount(item.minAmount.toString());
+                    setRequestedTerm(item.minTenorMonths.toString());
                     setShowApplyModal(true);
                 }}
             >
-                <Text style={styles.actionButtonText}>{item.buttonText}</Text>
+                <Text style={styles.actionButtonText}>Зээл авах</Text>
             </TouchableOpacity>
         </BlurView>
     );
@@ -317,7 +323,7 @@ export default function Loan() {
 
                     <Text style={styles.sectionTitle}>Зээлийн бүтээгдэхүүнүүд</Text>
                     <View style={styles.grid}>
-                        {LOAN_DATA.map((item) => (
+                        {loanProducts.map((item) => (
                             <View key={item.id} style={styles.cardWrapper}>
                                 {renderLoanCard(item)}
                             </View>
@@ -331,7 +337,7 @@ export default function Loan() {
                 <View style={styles.modalOverlay}>
                     <BlurView intensity={80} tint="dark" style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{selectedProduct?.title}</Text>
+                            <Text style={styles.modalTitle}>{selectedProduct?.name}</Text>
                             <TouchableOpacity onPress={() => { setShowApplyModal(false); setApplication(null); }}>
                                 <Ionicons name="close" size={24} color="white" />
                             </TouchableOpacity>
@@ -384,7 +390,7 @@ export default function Loan() {
                                     </View>
                                     <View style={styles.resultRow}>
                                         <Text style={styles.resultLabel}>Хугацаа:</Text>
-                                        <Text style={styles.resultValue}>{application.requestedTermMonths} сар</Text>
+                                        <Text style={styles.resultValue}>{application.tenorMonths} сар</Text>
                                     </View>
                                 </View>
                                 <TouchableOpacity
@@ -577,11 +583,30 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        marginBottom: 8,
     },
     durationText: {
         fontSize: 13,
         color: 'rgba(255,255,255,0.6)',
+    },
+    infoRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    interestRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+    },
+    interestText: {
+        fontSize: 12,
+        color: '#10B981',
+        fontWeight: 'bold',
     },
     amountLabel: {
         fontSize: 12,
