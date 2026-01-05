@@ -508,3 +508,140 @@ export const getCards = async (): Promise<GetCardsResponse> => {
         throw error;
     }
 };
+
+// ============================================
+// LOANS MANAGEMENT
+// ============================================
+
+export interface LoanProduct {
+    id: string;
+    name: string;
+    description: string;
+    minAmount: number;
+    maxAmount: number;
+    interestRate: number;
+    minTermMonths: number;
+    maxTermMonths: number;
+}
+
+export interface LoanApplication {
+    id: string;
+    userId: string;
+    loanProduct: LoanProduct;
+    maxEligibleAmount: number;
+    requestedAmount: number;
+    requestedTermMonths: number;
+    creditScore: number;
+    status: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISBURSED';
+    createdAt: string;
+}
+
+export interface ActiveLoan {
+    id: string;
+    principalAmount: number;
+    remainingBalance: number;
+    status: 'ACTIVE' | 'PAID' | 'OVERDUE';
+    startDate: string;
+    endDate: string;
+}
+
+export interface ApplyLoanRequest {
+    productId: string;
+    requestedAmount: number;
+    requestedTermMonths: number;
+}
+
+export interface GenericResponse<T = any> {
+    success: boolean;
+    message: string;
+    data: T;
+    timestamp: string;
+}
+
+export type ApplyLoanResponse = GenericResponse<LoanApplication>;
+export type DisburseLoanResponse = GenericResponse<ActiveLoan>;
+export type RepayLoanResponse = GenericResponse<null>;
+export type GetMyLoansResponse = GenericResponse<ActiveLoan[]>;
+
+export const applyForLoan = async (data: ApplyLoanRequest): Promise<ApplyLoanResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/loans/apply`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Apply for Loan error:', error);
+        throw error;
+    }
+};
+
+export const disburseLoan = async (applicationId: string): Promise<DisburseLoanResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/loans/disburse/${applicationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Disburse Loan error:', error);
+        throw error;
+    }
+};
+
+export interface RepayLoanRequest {
+    loanId: string;
+    amount: number;
+}
+
+export const repayLoan = async (data: RepayLoanRequest): Promise<RepayLoanResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/loans/repay`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Repay Loan error:', error);
+        throw error;
+    }
+};
+
+export const getMyLoans = async (): Promise<GetMyLoansResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const response = await fetch(`${API_BASE_URL}/api/v1/loans/my`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Get My Loans error:', error);
+        throw error;
+    }
+};
