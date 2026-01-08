@@ -11,7 +11,8 @@
         "logout": "Гарах",
         "language": "Хэл",
         "selectLanguage": "Хэл сонгох",
-        "cancel": "Цуцлах"
+        "cancel": "Цуцлах",
+        "selectTheme": "Өнгө солих"
     },
     "landing": {
         "title": "PAYME",

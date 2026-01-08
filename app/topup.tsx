@@ -11,9 +11,11 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SuccessModal from '../components/SuccessModal';
 import { confirmTopUp, initiateTopUp, TopUpResponse } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function TopUp() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const [amount, setAmount] = useState('0');
     const [loading, setLoading] = useState(false);
@@ -122,18 +124,18 @@ export default function TopUp() {
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Background Glows */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
             </View>
 
             {/* Header */}
@@ -146,10 +148,10 @@ export default function TopUp() {
                     }
                 ]}
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="white" />
+                <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{t('topup.title')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('topup.title')}</Text>
                 <View style={{ width: 40 }} />
             </Animated.View>
 
@@ -163,26 +165,28 @@ export default function TopUp() {
                                 {
                                     opacity: fadeAnim,
                                     transform: [{ translateY: slideAnim }],
+                                    backgroundColor: colors.glassBackground,
+                                    borderColor: colors.glassBorder,
                                 }
                             ]}
                         >
-                            <BlurView intensity={20} tint="light" style={styles.amountCardBlur}>
-                                <Text style={styles.amountLabel}>{t('topup.confirmation.amount')}</Text>
+                            <BlurView intensity={isDark ? 20 : 60} tint={isDark ? "light" : "default"} style={styles.amountCardBlur}>
+                                <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>{t('topup.confirmation.amount')}</Text>
                                 <View style={styles.amountContainer}>
-                                    <View style={styles.currencyIconBox}>
-                                        <Text style={styles.currencySymbol}>₮</Text>
+                                    <View style={[styles.currencyIconBox, { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.1)' }]}>
+                                        <Text style={[styles.currencySymbol, { color: colors.tint }]}>₮</Text>
                                     </View>
                                     <TextInput
                                         value={amount}
                                         onChangeText={handleAmountChange}
                                         placeholder="0"
-                                        placeholderTextColor="rgba(255,255,255,0.3)"
+                                        placeholderTextColor={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}
                                         keyboardType="numeric"
-                                        style={styles.amountInput}
-                                        selectionColor="#A78BFA"
+                                        style={[styles.amountInput, { color: colors.text }]}
+                                        selectionColor={colors.tint}
                                     />
                                 </View>
-                                <View style={styles.focusLine} />
+                                <View style={[styles.focusLine, { backgroundColor: colors.tint }]} />
                             </BlurView>
                         </Animated.View>
 
@@ -205,20 +209,21 @@ export default function TopUp() {
                                             key={amt}
                                             style={[
                                                 styles.quickAmountChip,
-                                                isActive && styles.quickAmountChipActive
+                                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                                isActive && { borderColor: colors.tint }
                                             ]}
                                             onPress={() => setAmount(formattedAmt)}
                                             activeOpacity={0.7}
                                         >
                                             {isActive ? (
                                                 <LinearGradient
-                                                    colors={['#A78BFA', '#8B5CF6']}
+                                                    colors={isDark ? ['#A78BFA', '#8B5CF6'] : ['#8B5CF6', '#7C3AED']}
                                                     style={styles.quickAmountGradient}
                                                 >
                                                     <Text style={styles.quickAmountTextActive}>₮{formattedAmt}</Text>
                                                 </LinearGradient>
                                             ) : (
-                                                <Text style={styles.quickAmountText}>₮{formattedAmt}</Text>
+                                                <Text style={[styles.quickAmountText, { color: colors.textSecondary }]}>₮{formattedAmt}</Text>
                                             )}
                                         </TouchableOpacity>
                                     );
@@ -234,24 +239,24 @@ export default function TopUp() {
                             }}
                         >
                             <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>{t('topup.paymentMethod')}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('topup.paymentMethod')}</Text>
                             </View>
-                            <TouchableOpacity style={styles.paymentMethodCard} activeOpacity={0.7}>
-                                <BlurView intensity={15} tint="light" style={styles.methodBlur}>
+                            <TouchableOpacity style={[styles.paymentMethodCard, { borderColor: colors.glassBorder }]} activeOpacity={0.7}>
+                                <BlurView intensity={isDark ? 15 : 60} tint={isDark ? "light" : "default"} style={styles.methodBlur}>
                                     <View style={styles.methodLeft}>
                                         <LinearGradient
-                                            colors={['#A78BFA', '#8B5CF6']}
+                                            colors={isDark ? ['#A78BFA', '#8B5CF6'] : ['#8B5CF6', '#7C3AED']}
                                             style={styles.methodIconContainer}
                                         >
                                             <Ionicons name="card" size={24} color="white" />
                                         </LinearGradient>
                                         <View style={styles.methodInfo}>
-                                            <Text style={styles.methodTitle}>{t('topup.methods.bankCard')}</Text>
-                                            <Text style={styles.methodSubtitle}>VISA Platinum •••• 4567</Text>
+                                            <Text style={[styles.methodTitle, { color: colors.text }]}>{t('topup.methods.bankCard')}</Text>
+                                            <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>VISA Platinum •••• 4567</Text>
                                         </View>
                                     </View>
-                                    <View style={styles.methodAction}>
-                                        <Ionicons name="swap-horizontal" size={20} color="rgba(255,255,255,0.6)" />
+                                    <View style={[styles.methodAction, { backgroundColor: colors.cardBackground }]}>
+                                        <Ionicons name="swap-horizontal" size={20} color={colors.textSecondary} />
                                     </View>
                                 </BlurView>
                             </TouchableOpacity>
@@ -268,10 +273,10 @@ export default function TopUp() {
                                 onPress={handleTopUp}
                                 disabled={loading}
                                 activeOpacity={0.8}
-                                style={styles.mainButtonWrapper}
+                                style={[styles.mainButtonWrapper, { shadowColor: colors.tint }]}
                             >
                                 <LinearGradient
-                                    colors={['#A78BFA', '#7C3AED']}
+                                    colors={isDark ? ['#A78BFA', '#7C3AED'] : ['#8B5CF6', '#7C3AED']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
                                     style={styles.confirmButton}
@@ -302,17 +307,17 @@ export default function TopUp() {
                     >
                         {/* Header Section */}
                         <View style={styles.confirmHeader}>
-                            <View style={styles.successIconContainer}>
+                            <View style={[styles.successIconContainer, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)', borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)' }]}>
                                 <Ionicons name="shield-checkmark" size={32} color="#10B981" />
                             </View>
-                            <Text style={styles.confirmHeaderText}>{t('topup.confirmation.ready')}</Text>
-                            <Text style={styles.confirmSubtext}>{t('topup.confirmation.scan')}</Text>
+                            <Text style={[styles.confirmHeaderText, { color: colors.text }]}>{t('topup.confirmation.ready')}</Text>
+                            <Text style={[styles.confirmSubtext, { color: colors.textSecondary }]}>{t('topup.confirmation.scan')}</Text>
                         </View>
 
                         {/* QR Code Card */}
-                        <View style={styles.qrCard}>
+                        <View style={[styles.qrCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                             <LinearGradient
-                                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.02)']}
+                                colors={isDark ? ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.02)'] : ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.4)']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.qrCardGradient}
@@ -326,29 +331,29 @@ export default function TopUp() {
                                         />
                                     ) : (
                                         <View style={styles.placeholderQr}>
-                                            <Ionicons name="qr-code" size={80} color="rgba(167, 139, 250, 0.3)" />
-                                            <Text style={styles.placeholderText}>{t('topup.confirmation.qrUnavailable')}</Text>
+                                            <Ionicons name="qr-code" size={80} color={isDark ? "rgba(167, 139, 250, 0.3)" : "rgba(124, 58, 237, 0.2)"} />
+                                            <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>{t('topup.confirmation.qrUnavailable')}</Text>
                                         </View>
                                     )}
                                 </View>
-                                <Text style={styles.qrLabel}>{t('topup.confirmation.scanToPay')}</Text>
+                                <Text style={[styles.qrLabel, { color: colors.textSecondary }]}>{t('topup.confirmation.scanToPay')}</Text>
                             </LinearGradient>
                         </View>
 
                         {/* Transaction Details */}
-                        <View style={styles.detailsCard}>
+                        <View style={[styles.detailsCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                             <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>{t('topup.confirmation.amount')}</Text>
-                                <Text style={styles.detailAmount}>₮{transaction.amount.toLocaleString()}</Text>
+                                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{t('topup.confirmation.amount')}</Text>
+                                <Text style={[styles.detailAmount, { color: colors.text }]}>₮{transaction.amount.toLocaleString()}</Text>
                             </View>
 
-                            <View style={styles.divider} />
+                            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                             <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>{t('topup.confirmation.status')}</Text>
-                                <View style={styles.statusBadge}>
-                                    <View style={styles.statusDot} />
-                                    <Text style={styles.statusText}>{transaction.status}</Text>
+                                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{t('topup.confirmation.status')}</Text>
+                                <View style={[styles.statusBadge, { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.1)' }]}>
+                                    <View style={[styles.statusDot, { backgroundColor: colors.tint, shadowColor: colors.tint }]} />
+                                    <Text style={[styles.statusText, { color: colors.tint }]}>{transaction.status}</Text>
                                 </View>
                             </View>
                         </View>
@@ -380,7 +385,7 @@ export default function TopUp() {
                         </TouchableOpacity>
 
                         {/* Help Text */}
-                        <Text style={styles.helpText}>
+                        <Text style={[styles.helpText, { color: colors.textSecondary }]}>
                             {t('topup.confirmation.help')}
                         </Text>
                     </Animated.View>

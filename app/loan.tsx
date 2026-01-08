@@ -6,7 +6,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Dimensions, Modal, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { ActiveLoan, applyForLoan, disburseLoan, getLoanProducts, getMyLoans, LoanApplication, LoanProduct, repayLoan } from '../src/api/client';
+import { ActiveLoan, applyForLoan, checkLoanEligibility, disburseLoan, getLoanProducts, getMyLoans, LoanApplication, LoanProduct, repayLoan } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ const BANNER_DATA = [
 
 export default function Loan() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -33,6 +35,7 @@ export default function Loan() {
     const [selectedProduct, setSelectedProduct] = useState<LoanProduct | null>(null);
     const [requestedAmount, setRequestedAmount] = useState('');
     const [requestedTerm, setRequestedTerm] = useState('12');
+    const [checkingProductId, setCheckingProductId] = useState<string | null>(null);
 
     // Approved State
     const [application, setApplication] = useState<LoanApplication | null>(null);
@@ -41,6 +44,8 @@ export default function Loan() {
     const [showRepayModal, setShowRepayModal] = useState(false);
     const [selectedLoan, setSelectedLoan] = useState<ActiveLoan | null>(null);
     const [repayAmount, setRepayAmount] = useState('');
+
+
 
     useEffect(() => {
         fetchLoans();
@@ -53,13 +58,35 @@ export default function Loan() {
     }, []);
 
     const fetchProducts = async () => {
+        setLoading(true);
         try {
             const response = await getLoanProducts();
-            if (response.success) {
+            if (response.success && response.data) {
                 setLoanProducts(response.data);
             }
         } catch (error) {
             console.error('Fetch loan products error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const checkEligibility = async (productId: string) => {
+        setCheckingProductId(productId);
+        try {
+            const response = await checkLoanEligibility(productId);
+            if (response.success && response.data) {
+                Alert.alert('Амжилттай', response.data.message || 'Зээлийн эрх шалгагдлаа.');
+                // Refresh products to get updated checked status
+                await fetchProducts();
+            } else {
+                Alert.alert('Алдаа', response.message);
+            }
+        } catch (error) {
+            console.error('Check eligibility error:', error);
+            Alert.alert('Алдаа', 'Зээлийн эрх шалгахад алдаа гарлаа.');
+        } finally {
+            setCheckingProductId(null);
         }
     };
 
@@ -88,17 +115,29 @@ export default function Loan() {
         setActionLoading(true);
         try {
             const response = await applyForLoan({
-                productId: selectedProduct.id,
+                productId: selectedProduct.productId,
                 requestedAmount: amount,
                 tenorMonths: parseInt(requestedTerm),
             });
 
             if (response.success) {
-                setApplication(response.data);
+                if (response.data.status === 'APPROVED') {
+                    // Loan is already approved and disbursed
+                    Alert.alert('Амжилттай', response.data.message || 'Зээл амжилттай олгогдлоо.');
+                    setShowApplyModal(false);
+                    setApplication(null);
+                    setApplication(null);
+                    fetchLoans(); // Refresh active loans
+                    fetchProducts(); // Refresh eligibility
+                } else {
+                    // Still requires manual disbursement (e.g. if status is PENDING/ready for disbursement)
+                    setApplication(response.data);
+                }
             } else {
                 Alert.alert('Алдаа', response.message);
             }
         } catch (error) {
+            console.error('Apply error:', error);
             Alert.alert('Алдаа', 'Зээлийн хүсэлт илгээхэд алдаа гарлаа');
         } finally {
             setActionLoading(false);
@@ -115,7 +154,9 @@ export default function Loan() {
                 Alert.alert('Амжилттай', 'Зээл олгогдлоо. Таны хэтэвчинд мөнгө орсон байна.');
                 setShowApplyModal(false);
                 setApplication(null);
+                setApplication(null);
                 fetchLoans();
+                fetchProducts();
             } else {
                 Alert.alert('Алдаа', response.message);
             }
@@ -163,13 +204,13 @@ export default function Loan() {
     };
 
     const renderLoanCard = (item: LoanProduct) => (
-        <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.cardTitle}>{item.name}</Text>
+        <BlurView intensity={isDark ? 25 : 60} tint={isDark ? "light" : "default"} style={[styles.card, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{item.productName}</Text>
 
             <View style={styles.infoRow}>
                 <View style={styles.durationRow}>
-                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.6)" />
-                    <Text style={styles.durationText}>{item.minTenorMonths}-{item.maxTenorMonths} сар</Text>
+                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.durationText, { color: colors.textSecondary }]}>{item.minTenorMonths}-{item.maxTenorMonths} сар</Text>
                 </View>
                 <View style={styles.interestRow}>
                     <Ionicons name="trending-up-outline" size={14} color="#10B981" />
@@ -177,17 +218,22 @@ export default function Loan() {
                 </View>
             </View>
 
-            <Text style={styles.amountLabel}>Боломжит хэмжээ</Text>
-            <Text style={styles.amountText}>{item.maxAmount.toLocaleString()}₮</Text>
+            <Text style={[styles.amountLabel, { color: isDark ? '#34D399' : '#059669' }]}>
+                {item.checked ? 'Боломжит хэмжээ' : 'Эрх шалгана уу'}
+            </Text>
+            <Text style={[styles.amountText, { color: colors.text }]}>
+                {item.checked ? `${item.maxEligibleAmount.toLocaleString()}₮` : '-'}
+            </Text>
 
             <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.actionButton, { opacity: item.checked ? 1 : 0.5 }]}
                 onPress={() => {
                     setSelectedProduct(item);
                     setRequestedAmount(item.minAmount.toString());
                     setRequestedTerm(item.minTenorMonths.toString());
                     setShowApplyModal(true);
                 }}
+                disabled={!item.checked}
             >
                 <Text style={styles.actionButtonText}>Зээл авах</Text>
             </TouchableOpacity>
@@ -195,11 +241,11 @@ export default function Loan() {
     );
 
     const renderActiveLoanCard = (loan: ActiveLoan) => (
-        <BlurView intensity={35} tint="light" style={styles.activeLoanCard}>
+        <BlurView intensity={isDark ? 35 : 70} tint={isDark ? "light" : "default"} style={[styles.activeLoanCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
             <View style={styles.activeHeader}>
                 <View>
-                    <Text style={styles.activeLabel}>Үлдэгдэл баланс</Text>
-                    <Text style={styles.activeAmount}>₮{loan.remainingBalance.toLocaleString()}</Text>
+                    <Text style={[styles.activeLabel, { color: colors.textSecondary }]}>Үлдэгдэл баланс</Text>
+                    <Text style={[styles.activeAmount, { color: colors.text }]}>₮{loan.remainingBalance.toLocaleString()}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: loan.status === 'ACTIVE' ? '#10B98120' : '#EF444420' }]}>
                     <Text style={[styles.statusText, { color: loan.status === 'ACTIVE' ? '#10B981' : '#EF4444' }]}>{loan.status}</Text>
@@ -208,12 +254,12 @@ export default function Loan() {
 
             <View style={styles.loanDetailsRow}>
                 <View>
-                    <Text style={styles.detailLabel}>Нийт дүн</Text>
-                    <Text style={styles.detailValue}>₮{loan.principalAmount.toLocaleString()}</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Нийт дүн</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>₮{loan.principalAmount.toLocaleString()}</Text>
                 </View>
                 <View>
-                    <Text style={styles.detailLabel}>Дуусах хугацаа</Text>
-                    <Text style={styles.detailValue}>{new Date(loan.endDate).toLocaleDateString()}</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Дуусах хугацаа</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{new Date(loan.endDate).toLocaleDateString()}</Text>
                 </View>
             </View>
 
@@ -238,33 +284,29 @@ export default function Loan() {
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
             </View>
 
             <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Зээл</Text>
-                    <View style={{ width: 44 }} />
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Зээл</Text>
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     {/* Active Loans Section */}
                     {loans.length > 0 && (
                         <View style={styles.activeSection}>
-                            <Text style={styles.sectionTitle}>Миний зээлүүд</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Миний зээлүүд</Text>
                             {loans.map((loan) => (
                                 <View key={loan.id} style={{ marginBottom: 15 }}>
                                     {renderActiveLoanCard(loan)}
@@ -286,29 +328,66 @@ export default function Loan() {
                                 onScroll={handleScroll}
                                 scrollEventThrottle={16}
                             >
-                                {BANNER_DATA.map((item) => (
-                                    <BlurView key={item.id} intensity={25} tint="light" style={styles.bannerItem}>
-                                        <Image
-                                            source={{ uri: item.image }}
-                                            style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]}
-                                            contentFit="cover"
-                                        />
-                                        <View style={styles.bannerOverlay} />
-                                        <View style={styles.bannerContent}>
-                                            <View style={styles.bannerTextContainer}>
-                                                <Text style={styles.bannerTitle}>{item.title}</Text>
-                                                <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+                                {loanProducts.length > 0 ? (
+                                    loanProducts.map((item, idx) => (
+                                        <BlurView key={item.productId} intensity={isDark ? 25 : 80} tint={isDark ? "light" : "default"} style={[styles.bannerItem, { borderColor: colors.glassBorder }]}>
+                                            <Image
+                                                source={{ uri: idx === 0 ? BANNER_DATA[0].image : idx === 1 ? BANNER_DATA[1].image : BANNER_DATA[2].image }}
+                                                style={[StyleSheet.absoluteFillObject, { opacity: isDark ? 0.6 : 0.8 }]}
+                                                contentFit="cover"
+                                            />
+                                            <View style={styles.bannerOverlay} />
+                                            <View style={styles.bannerContent}>
+                                                <View style={styles.bannerTextContainer}>
+                                                    <Text style={styles.bannerTitle}>{item.productName}</Text>
+                                                    <View style={styles.bannerLimitContainer}>
+                                                        <Text style={styles.bannerLimitLabel}>Хэмжээ:</Text>
+                                                        <Text style={styles.bannerLimitValue}>
+                                                            {item.minAmount.toLocaleString()}₮ - {item.maxAmount.toLocaleString()}₮
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                <TouchableOpacity
+                                                    style={[styles.bannerButton, {
+                                                        backgroundColor: item.checked ? 'rgba(167, 139, 250, 0.5)' : colors.tint,
+                                                        opacity: item.checked ? 0.6 : 1
+                                                    }]}
+                                                    onPress={() => checkEligibility(item.productId)}
+                                                    disabled={checkingProductId === item.productId || item.checked}
+                                                >
+                                                    {checkingProductId === item.productId ? (
+                                                        <ActivityIndicator size="small" color="white" />
+                                                    ) : (
+                                                        <Text style={styles.bannerButtonText}>
+                                                            {item.checked ? 'Шалгасан' : 'Шалгах'}
+                                                        </Text>
+                                                    )}
+                                                </TouchableOpacity>
                                             </View>
-                                            <TouchableOpacity style={styles.bannerButton}>
-                                                <Text style={styles.bannerButtonText}>Дэлгэрэнгүй</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </BlurView>
-                                ))}
+                                        </BlurView>
+                                    ))
+                                ) : (
+                                    BANNER_DATA.map((item) => (
+                                        <BlurView key={item.id} intensity={isDark ? 25 : 80} tint={isDark ? "light" : "default"} style={[styles.bannerItem, { borderColor: colors.glassBorder }]}>
+                                            <Image
+                                                source={{ uri: item.image }}
+                                                style={[StyleSheet.absoluteFillObject, { opacity: isDark ? 0.6 : 0.8 }]}
+                                                contentFit="cover"
+                                            />
+                                            <View style={styles.bannerOverlay} />
+                                            <View style={styles.bannerContent}>
+                                                <View style={styles.bannerTextContainer}>
+                                                    <Text style={styles.bannerTitle}>{item.title}</Text>
+                                                    <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+                                                </View>
+                                            </View>
+                                        </BlurView>
+                                    ))
+                                )}
                             </ScrollView>
 
                             <View style={styles.paginationContainer}>
-                                {BANNER_DATA.map((_, index) => (
+                                {(loanProducts.length > 0 ? loanProducts : BANNER_DATA).map((_, index) => (
                                     <View
                                         key={index}
                                         style={[
@@ -321,10 +400,12 @@ export default function Loan() {
                         </View>
                     )}
 
-                    <Text style={styles.sectionTitle}>Зээлийн бүтээгдэхүүнүүд</Text>
+
+
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Зээлийн бүтээгдэхүүнүүд</Text>
                     <View style={styles.grid}>
                         {loanProducts.map((item) => (
-                            <View key={item.id} style={styles.cardWrapper}>
+                            <View key={item.productId} style={styles.cardWrapper}>
                                 {renderLoanCard(item)}
                             </View>
                         ))}
@@ -335,11 +416,11 @@ export default function Loan() {
             {/* Apply Loan Modal */}
             <Modal visible={showApplyModal} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
-                    <BlurView intensity={80} tint="dark" style={styles.modalContent}>
+                    <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{selectedProduct?.name}</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedProduct?.productName}</Text>
                             <TouchableOpacity onPress={() => { setShowApplyModal(false); setApplication(null); }}>
-                                <Ionicons name="close" size={24} color="white" />
+                                <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
@@ -370,7 +451,7 @@ export default function Loan() {
                                 </View>
 
                                 <TouchableOpacity
-                                    style={styles.modalButton}
+                                    style={[styles.modalButton, { backgroundColor: colors.tint }]}
                                     onPress={handleApply}
                                     disabled={actionLoading}
                                 >
@@ -382,15 +463,15 @@ export default function Loan() {
                                 <View style={styles.successIcon}>
                                     <Ionicons name="checkmark-circle" size={48} color="#10B981" />
                                 </View>
-                                <Text style={styles.resultTitle}>Таны зээл батлагдлаа!</Text>
-                                <View style={styles.resultDetails}>
+                                <Text style={[styles.resultTitle, { color: colors.text }]}>Таны зээл батлагдлаа!</Text>
+                                <View style={[styles.resultDetails, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
                                     <View style={styles.resultRow}>
-                                        <Text style={styles.resultLabel}>Батлагдсан дүн:</Text>
-                                        <Text style={styles.resultValue}>₮{application.maxEligibleAmount.toLocaleString()}</Text>
+                                        <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>Батлагдсан дүн:</Text>
+                                        <Text style={[styles.resultValue, { color: colors.text }]}>₮{application.maxEligibleAmount.toLocaleString()}</Text>
                                     </View>
                                     <View style={styles.resultRow}>
-                                        <Text style={styles.resultLabel}>Хугацаа:</Text>
-                                        <Text style={styles.resultValue}>{application.tenorMonths} сар</Text>
+                                        <Text style={[styles.resultLabel, { color: colors.textSecondary }]}>Хугацаа:</Text>
+                                        <Text style={[styles.resultValue, { color: colors.text }]}>{application.tenorMonths} сар</Text>
                                     </View>
                                 </View>
                                 <TouchableOpacity
@@ -409,11 +490,11 @@ export default function Loan() {
             {/* Repay Modal */}
             <Modal visible={showRepayModal} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
-                    <BlurView intensity={80} tint="dark" style={styles.modalContent}>
+                    <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Зээл төлөх</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>Зээл төлөх</Text>
                             <TouchableOpacity onPress={() => setShowRepayModal(false)}>
-                                <Ionicons name="close" size={24} color="white" />
+                                <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
@@ -458,21 +539,9 @@ const styles = StyleSheet.create({
         paddingTop: 60,
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 20,
         marginBottom: 20,
-    },
-    backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.15)',
     },
     headerTitle: {
         fontSize: 24,
@@ -634,6 +703,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     bannerWrapper: {
+        marginTop: 20,
         marginBottom: 25,
         alignItems: 'center',
     },
@@ -706,6 +776,36 @@ const styles = StyleSheet.create({
     paginationDotActive: {
         width: 20,
         backgroundColor: 'white',
+    },
+    bannerLimitContainer: {
+        marginTop: 4,
+    },
+    bannerLimitLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        fontWeight: '600',
+        marginBottom: 2,
+    },
+    bannerLimitValue: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    eligibilityMessageCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: 'rgba(167, 139, 250, 0.1)',
+        padding: 15,
+        borderRadius: 16,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(167, 139, 250, 0.2)',
+    },
+    eligibilityText: {
+        fontSize: 14,
+        fontWeight: '600',
+        flex: 1,
     },
     modalOverlay: {
         flex: 1,

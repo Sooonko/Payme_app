@@ -7,6 +7,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Dimensions, Easing, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardData, getCards, getWallet } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -17,6 +18,7 @@ export default function Home() {
     const [isBalanceVisible, setIsBalanceVisible] = useState(true);
     const [loading, setLoading] = useState(true);
     const [cards, setCards] = useState<CardData[]>([]);
+    const { colors, isDark } = useTheme();
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -120,17 +122,17 @@ export default function Home() {
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             {/* Background Glows */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
             </View>
             <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
                 <Image
@@ -139,12 +141,12 @@ export default function Home() {
                     contentFit="contain"
                 />
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.roundAction} onPress={() => router.push('/activity')}>
-                        <Ionicons name="time-outline" size={22} color="white" />
+                    <TouchableOpacity style={[styles.roundAction, { backgroundColor: colors.cardBackground, borderColor: colors.glassBorder }]} onPress={() => router.push('/activity')}>
+                        <Ionicons name="time-outline" size={22} color={colors.text} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.roundAction}>
-                        <Ionicons name="notifications-outline" size={22} color="white" />
-                        <View style={styles.badge} />
+                    <TouchableOpacity style={[styles.roundAction, { backgroundColor: colors.cardBackground, borderColor: colors.glassBorder }]}>
+                        <Ionicons name="notifications-outline" size={22} color={colors.text} />
+                        <View style={[styles.badge, { borderColor: isDark ? '#312E81' : '#FFFFFF' }]} />
                     </TouchableOpacity>
 
                 </View>
@@ -158,17 +160,17 @@ export default function Home() {
                         transform: [{ translateY: slideAnim }]
                     }
                 ]}>
-                    <BlurView intensity={30} tint="light" style={styles.totalBalanceCard}>
+                    <BlurView intensity={isDark ? 30 : 60} tint={isDark ? "light" : "default"} style={[styles.totalBalanceCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <View style={styles.balanceHeader}>
-                            <Text style={styles.totalBalanceLabel}>{t('home.totalBalance')}</Text>
+                            <Text style={[styles.totalBalanceLabel, { color: colors.textSecondary }]}>{t('home.totalBalance')}</Text>
                             <TouchableOpacity onPress={toggleBalanceVisibility} style={styles.visibilityBtn}>
-                                <Ionicons name={isBalanceVisible ? "eye-outline" : "eye-off-outline"} size={20} color="rgba(255,255,255,0.6)" />
+                                <Ionicons name={isBalanceVisible ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textSecondary} />
                             </TouchableOpacity>
                         </View>
                         {loading ? (
                             <ActivityIndicator color="white" />
                         ) : (
-                            <Text style={styles.totalBalanceAmount}>
+                            <Text style={[styles.totalBalanceAmount, { color: colors.text }]}>
                                 {isBalanceVisible ? `₮${(balance || 24500).toLocaleString()}` : '₮ ••••••'}
                             </Text>
                         )}
@@ -184,16 +186,16 @@ export default function Home() {
                             >
                                 {/* Main Card (Front/Visa) */}
                                 <View style={styles.cardWrapper}>
-                                    <BlurView intensity={70} tint="light" style={styles.glassCard}>
+                                    <BlurView intensity={isDark ? 70 : 90} tint={isDark ? "light" : "default"} style={[styles.glassCard, { borderColor: colors.glassBorder }]}>
                                         <View style={styles.cardHeader}>
-                                            <Text style={styles.cardBrand}>payme</Text>
-                                            <Ionicons name="wifi-outline" size={22} color="white" style={{ transform: [{ rotate: '90deg' }] }} />
+                                            <Text style={[styles.cardBrand, { color: isDark ? 'white' : colors.text }]}>payme</Text>
+                                            <Ionicons name="wifi-outline" size={22} color={isDark ? 'white' : colors.text} style={{ transform: [{ rotate: '90deg' }] }} />
                                         </View>
-                                        <Text style={styles.cardNumber}>••••  ••••  ••••  3876</Text>
+                                        <Text style={[styles.cardNumber, { color: isDark ? 'white' : colors.text }]}>••••  ••••  ••••  3876</Text>
                                         <View style={styles.cardFooter}>
                                             <View>
-                                                <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                                <Text style={styles.cardHolderName}>JONSON</Text>
+                                                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>CARD HOLDER</Text>
+                                                <Text style={[styles.cardHolderName, { color: isDark ? 'white' : colors.text }]}>JONSON</Text>
                                             </View>
                                             <View style={styles.cardFooterRight}>
                                                 <TouchableOpacity
@@ -201,11 +203,11 @@ export default function Home() {
                                                     onPress={() => router.push('/topup')}
                                                     activeOpacity={0.7}
                                                 >
-                                                    <Ionicons name="add-circle" size={28} color="white" />
+                                                    <Ionicons name="add-circle" size={28} color={isDark ? 'white' : colors.tint} />
                                                 </TouchableOpacity>
                                                 <View style={styles.mastercardLogo}>
-                                                    <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.4)', left: 0 }]} />
-                                                    <View style={[styles.mcCircle, { backgroundColor: 'rgba(255,255,255,0.6)', left: 12 }]} />
+                                                    <View style={[styles.mcCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.1)', left: 0 }]} />
+                                                    <View style={[styles.mcCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.2)', left: 12 }]} />
                                                 </View>
                                             </View>
                                         </View>
@@ -214,19 +216,19 @@ export default function Home() {
 
                                 {/* Loyalty Card */}
                                 <View style={styles.cardWrapper}>
-                                    <BlurView intensity={40} tint="light" style={[styles.glassCard, styles.loyaltyCardBack]}>
+                                    <BlurView intensity={isDark ? 40 : 80} tint={isDark ? "light" : "default"} style={[styles.glassCard, styles.loyaltyCardBack, { borderColor: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(251, 191, 36, 0.5)' }]}>
                                         <View style={styles.loyaltyCardContent}>
                                             <View>
                                                 <Text style={styles.loyaltyLabel}>LOYALTY CARD</Text>
-                                                <Text style={styles.loyaltyPoints}>2,450 pts</Text>
+                                                <Text style={[styles.loyaltyPoints, { color: isDark ? 'white' : colors.text }]}>2,450 pts</Text>
                                             </View>
-                                            <View style={styles.loyaltyIconBox}>
+                                            <View style={[styles.loyaltyIconBox, { borderColor: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(251, 191, 36, 0.5)' }]}>
                                                 <Ionicons name="medal" size={28} color="#FBBF24" />
                                             </View>
                                         </View>
                                         <View style={styles.loyaltyCardFooter}>
-                                            <Text style={styles.loyaltyMemberName}>GOLD MEMBER</Text>
-                                            <View style={styles.loyaltyProgress}>
+                                            <Text style={[styles.loyaltyMemberName, { color: colors.textSecondary }]}>GOLD MEMBER</Text>
+                                            <View style={[styles.loyaltyProgress, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                                                 <View style={[styles.loyaltyProgressBar, { width: '70%' }]} />
                                             </View>
                                         </View>
@@ -241,7 +243,8 @@ export default function Home() {
                                         key={index}
                                         style={[
                                             styles.cardDot,
-                                            cardIndex === index && styles.cardDotActive
+                                            { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)' },
+                                            cardIndex === index && (isDark ? styles.cardDotActive : { width: 18, backgroundColor: colors.tint })
                                         ]}
                                     />
                                 ))}
@@ -263,7 +266,7 @@ export default function Home() {
                         scrollEventThrottle={16}
                     >
                         {bannerItems.map((item) => (
-                            <BlurView key={item.id} intensity={25} tint="light" style={styles.bannerItem}>
+                            <BlurView key={item.id} intensity={isDark ? 25 : 80} tint={isDark ? "light" : "default"} style={[styles.bannerItem, { borderColor: colors.glassBorder }]}>
                                 <Image
                                     source={{ uri: item.image }}
                                     style={[StyleSheet.absoluteFillObject, { opacity: 0.7 }]}
@@ -287,7 +290,8 @@ export default function Home() {
                                 key={index}
                                 style={[
                                     styles.paginationDot,
-                                    index === bannerIndex && styles.paginationDotActive
+                                    { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' },
+                                    index === bannerIndex && (isDark ? styles.paginationDotActive : { width: 20, backgroundColor: colors.tint })
                                 ]}
                             />
                         ))}
@@ -310,19 +314,19 @@ export default function Home() {
                             }
                         ]}
                     >
-                        <BlurView intensity={25} tint="light" style={styles.ecosystemCard}>
+                        <BlurView intensity={isDark ? 25 : 60} tint={isDark ? "light" : "default"} style={[styles.ecosystemCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                             <TouchableOpacity style={styles.ecosystemItemContent} activeOpacity={0.7}>
                                 <View style={styles.itemLeft}>
-                                    <View style={[styles.itemIconBox, { backgroundColor: item.color + '15' }]}>
+                                    <View style={[styles.itemIconBox, { backgroundColor: item.color + (isDark ? '15' : '30'), borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                                         <Ionicons name={item.icon as any} size={26} color={item.color} />
                                     </View>
                                     <View>
-                                        <Text style={styles.itemTitle}>{item.title}</Text>
-                                        <Text style={styles.itemDesc}>{item.desc}</Text>
+                                        <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
+                                        <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>{item.desc}</Text>
                                     </View>
                                 </View>
-                                <View style={styles.chevronBox}>
-                                    <Ionicons name="chevron-forward" size={18} color="white" />
+                                <View style={[styles.chevronBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderColor: colors.glassBorder }]}>
+                                    <Ionicons name="chevron-forward" size={18} color={colors.text} />
                                 </View>
                             </TouchableOpacity>
                         </BlurView>

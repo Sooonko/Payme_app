@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { addCard } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { detectCardType, generateMockCardToken, getCardLast4, validateCardNumber, validateExpiryDate } from '../src/utils/cardUtils';
 
 export default function AddCard() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const [cardNumber, setCardNumber] = useState('');
     const [cardholderName, setCardholderName] = useState('');
@@ -126,16 +129,21 @@ export default function AddCard() {
     const displayCardType = cardNumber ? detectCardType(cardNumber.replace(/\s/g, '')) : 'VISA';
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <LinearGradient
+            colors={colors.backgroundGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push('/cards')}>
-                    <Ionicons name="arrow-back" size={24} color="white" />
+                <TouchableOpacity onPress={() => router.push('/cards')} style={[styles.backButton, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{t('addCard.title')}</Text>
-                <View style={{ width: 24 }} />
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('addCard.title')}</Text>
+                <View style={{ width: 44 }} />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -167,60 +175,64 @@ export default function AddCard() {
                 </View>
 
                 {/* Form Section */}
-                <Text style={styles.sectionTitle}>{t('addCard.section')}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('addCard.section')}</Text>
 
                 {/* Card Number */}
-                <View style={styles.inputContainer}>
-                    <Ionicons name="card-outline" size={20} color="#A78BFA" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="card-outline" size={20} color={colors.tint} style={styles.inputIcon} />
                     <TextInput
                         value={cardNumber}
                         onChangeText={(text) => setCardNumber(formatCardNumberInput(text))}
                         placeholder={t('addCard.placeholders.number')}
-                        placeholderTextColor="rgba(255,255,255,0.4)"
+                        placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                         keyboardType="numeric"
                         maxLength={19}
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text }]}
+                        selectionColor={colors.tint}
                     />
                 </View>
 
                 {/* Cardholder Name */}
-                <View style={styles.inputContainer}>
-                    <Ionicons name="person-outline" size={20} color="#A78BFA" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="person-outline" size={20} color={colors.tint} style={styles.inputIcon} />
                     <TextInput
                         value={cardholderName}
                         onChangeText={setCardholderName}
                         placeholder={t('addCard.placeholders.name')}
-                        placeholderTextColor="rgba(255,255,255,0.4)"
+                        placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                         autoCapitalize="words"
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text }]}
+                        selectionColor={colors.tint}
                     />
                 </View>
 
                 {/* Expiry Date and CVV */}
                 <View style={styles.rowInputs}>
-                    <View style={[styles.inputContainer, styles.halfInput]}>
-                        <Ionicons name="calendar-outline" size={20} color="#A78BFA" style={styles.inputIcon} />
+                    <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                        <Ionicons name="calendar-outline" size={20} color={colors.tint} style={styles.inputIcon} />
                         <TextInput
                             value={expiryDate}
                             onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
                             placeholder={t('addCard.placeholders.expiry')}
-                            placeholderTextColor="rgba(255,255,255,0.4)"
+                            placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                             keyboardType="numeric"
                             maxLength={5}
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text }]}
+                            selectionColor={colors.tint}
                         />
                     </View>
-                    <View style={[styles.inputContainer, styles.halfInput]}>
-                        <Ionicons name="lock-closed-outline" size={20} color="#A78BFA" style={styles.inputIcon} />
+                    <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                        <Ionicons name="lock-closed-outline" size={20} color={colors.tint} style={styles.inputIcon} />
                         <TextInput
                             value={cvv}
                             onChangeText={(text) => setCvv(text.replace(/\D/g, '').substring(0, 3))}
                             placeholder={t('addCard.placeholders.cvv')}
-                            placeholderTextColor="rgba(255,255,255,0.4)"
+                            placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                             keyboardType="numeric"
                             maxLength={3}
                             secureTextEntry
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text }]}
+                            selectionColor={colors.tint}
                         />
                     </View>
                 </View>
@@ -235,7 +247,7 @@ export default function AddCard() {
 
                 {/* Add Card Button */}
                 <TouchableOpacity
-                    style={[styles.addButton, loading && styles.addButtonDisabled]}
+                    style={[styles.addButton, { backgroundColor: colors.tint, shadowColor: colors.tint }, loading && styles.addButtonDisabled]}
                     onPress={handleAddCard}
                     disabled={loading}
                 >
@@ -249,14 +261,21 @@ export default function AddCard() {
                     )}
                 </TouchableOpacity>
             </ScrollView>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
     header: {
         flexDirection: 'row',
@@ -279,15 +298,10 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     cardMockup: {
-        backgroundColor: '#A78BFA',
         borderRadius: 20,
         padding: 24,
         minHeight: 200,
         justifyContent: 'space-between',
-        shadowColor: '#A78BFA',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
         elevation: 8,
     },
     cardTop: {
@@ -333,13 +347,11 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
     },
     inputIcon: {
         marginRight: 12,
@@ -374,13 +386,11 @@ const styles = StyleSheet.create({
     },
     addButton: {
         flexDirection: 'row',
-        backgroundColor: '#A78BFA',
         borderRadius: 16,
         paddingVertical: 18,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 32,
-        shadowColor: '#A78BFA',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

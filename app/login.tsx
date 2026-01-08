@@ -6,19 +6,21 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Modal, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { loginUser } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function Login() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({ email: '', password: '' });
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Animation values
     const emailLabelAnim = useRef(new Animated.Value(0)).current;
@@ -63,11 +65,6 @@ export default function Login() {
             }).start();
         }
     }, [password, passwordFocused]);
-
-    const validateEmail = (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
 
     const handleEmailFocus = () => {
         setEmailFocused(true);
@@ -200,11 +197,7 @@ export default function Login() {
         if (!email) {
             newErrors.email = t('login.errors.emailRequired');
             hasError = true;
-        } else if (!validateEmail(email)) {
-            newErrors.email = t('login.errors.emailInvalid');
-            hasError = true;
         }
-
         if (!password) {
             newErrors.password = t('login.errors.passwordRequired');
             hasError = true;
@@ -212,27 +205,21 @@ export default function Login() {
 
         setErrors(newErrors);
 
-        if (hasError) {
-            return;
-        }
+        if (hasError) return;
 
         setLoading(true);
         try {
-            const response = await loginUser({
-                email,
-                password
-            });
+            const response = await loginUser({ email, password });
 
             if (response.success && response.data) {
                 await SecureStore.setItemAsync('userToken', response.data.token);
-                // In a real app, you would store the token here
+                await SecureStore.setItemAsync('userInfo', JSON.stringify(response.data.user));
                 router.push('/home');
             } else {
-                setErrorMessage(response.message || t('login.errors.credentials'));
+                setErrorMessage(response.message || t('login.errors.generic'));
                 setShowErrorModal(true);
             }
         } catch (error) {
-            console.error('Login error details:', error);
             setErrorMessage(t('login.errors.network'));
             setShowErrorModal(true);
         } finally {
@@ -242,12 +229,12 @@ export default function Login() {
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -278,10 +265,11 @@ export default function Login() {
                                     }),
                                 }}
                             >
-                                <Ionicons name="lock-closed" size={48} color="#A78BFA" />
+                                <Ionicons name="lock-closed" size={48} color={colors.tint} />
                             </Animated.View>
                         </Animated.View>
-                        <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+                        <Text style={[styles.title, { color: colors.text }]}>{t('login.title')}</Text>
+                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('login.subtitle')}</Text>
                     </View>
 
                     {/* Form Container */}
@@ -317,10 +305,11 @@ export default function Login() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                emailFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                emailFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.email && styles.inputError
                             ]}>
-                                <Ionicons name="mail-outline" size={20} color={emailFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="mail-outline" size={20} color={emailFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={email}
                                     onChangeText={(text) => {
@@ -330,10 +319,11 @@ export default function Login() {
                                     onFocus={handleEmailFocus}
                                     onBlur={handleEmailBlur}
                                     placeholder={!emailFocused ? t('login.email') : ""}
-                                    placeholderTextColor="#8F92A1"
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                             </View>
                             {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
@@ -370,10 +360,11 @@ export default function Login() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                passwordFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                passwordFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.password && styles.inputError
                             ]}>
-                                <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={password}
                                     onChangeText={(text) => {
@@ -383,11 +374,12 @@ export default function Login() {
                                     onFocus={handlePasswordFocus}
                                     onBlur={handlePasswordBlur}
                                     placeholder={!passwordFocused ? t('login.password') : ""}
-                                    placeholderTextColor="#8F92A1"
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                                     secureTextEntry={!showPassword}
                                     autoCapitalize="none"
                                     autoCorrect={false}
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowPassword(!showPassword)}
@@ -396,7 +388,7 @@ export default function Login() {
                                     <Ionicons
                                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}
-                                        color={passwordFocused ? "#A78BFA" : "#8F92A1"}
+                                        color={passwordFocused ? colors.tint : colors.tabIconDefault}
                                     />
                                 </TouchableOpacity>
                             </View>
@@ -411,10 +403,10 @@ export default function Login() {
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
-                                    colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
+                                    colors={isDark ? ['#A78BFA', '#8B5CF6', '#7C3AED'] : ['#8B5CF6', '#7C3AED', '#6D28D9']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
-                                    style={styles.loginButton}
+                                    style={[styles.loginButton, { shadowColor: colors.tint }]}
                                 >
                                     {loading && (
                                         <Animated.View
@@ -446,8 +438,8 @@ export default function Login() {
                         </Animated.View>
 
                         {/* Sign Up Link */}
-                        <Text style={styles.signupText}>
-                            {t('login.noAccount')} <Text style={styles.signupLink} onPress={() => router.push('/register')}>{t('login.signup')}</Text>
+                        <Text style={[styles.signupText, { color: colors.textSecondary }]}>
+                            {t('login.noAccount')} <Text style={[styles.signupLink, { color: colors.tint }]} onPress={() => router.push('/register')}>{t('login.signup')}</Text>
                         </Text>
                     </View>
                 </View>
@@ -459,15 +451,15 @@ export default function Login() {
                 transparent
                 animationType="fade"
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }]}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.errorIcon}>
                             <Ionicons name="close-circle" size={80} color="#FF4B4B" />
                         </View>
-                        <Text style={styles.errorTitle}>{t('login.errors.failed')}</Text>
-                        <Text style={styles.errorMessage}>{errorMessage}</Text>
+                        <Text style={[styles.errorTitle, { color: colors.text }]}>{t('login.errors.failed')}</Text>
+                        <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>{errorMessage}</Text>
                         <TouchableOpacity
-                            style={styles.closeButton}
+                            style={[styles.closeButton, { backgroundColor: colors.tint }]}
                             onPress={() => setShowErrorModal(false)}
                         >
                             <Text style={styles.closeButtonText}>{t('login.errors.tryAgain')}</Text>
@@ -479,7 +471,6 @@ export default function Login() {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -489,8 +480,8 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        justifyContent: 'center',
         paddingHorizontal: 24,
+        justifyContent: 'center',
     },
     header: {
         alignItems: 'center',
@@ -515,12 +506,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: 'white',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.6)',
         fontWeight: '400',
     },
     formContainer: {
@@ -541,12 +530,10 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 16,
         borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     inputFocused: {
         borderColor: '#A78BFA',
@@ -568,7 +555,6 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: 'white',
         fontSize: 16,
         fontWeight: '500',
     },
@@ -592,7 +578,6 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         marginTop: 8,
         marginBottom: 24,
-        shadowColor: '#A78BFA',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -609,29 +594,24 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
     signupText: {
-        color: 'rgba(255, 255, 255, 0.7)',
         textAlign: 'center',
         fontSize: 15,
         fontWeight: '500',
     },
     signupLink: {
-        color: '#A78BFA',
         fontWeight: '700',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#1E2238',
         borderRadius: 24,
         padding: 40,
         alignItems: 'center',
         width: '85%',
         borderWidth: 2,
-        borderColor: 'rgba(255, 75, 75, 0.3)',
     },
     errorIcon: {
         marginBottom: 24,
@@ -639,18 +619,15 @@ const styles = StyleSheet.create({
     errorTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: 'white',
         marginBottom: 16,
     },
     errorMessage: {
         fontSize: 16,
-        color: 'rgba(255,255,255,0.7)',
         textAlign: 'center',
         marginBottom: 32,
         lineHeight: 24,
     },
     closeButton: {
-        backgroundColor: '#A78BFA',
         borderRadius: 16,
         paddingVertical: 16,
         paddingHorizontal: 60,

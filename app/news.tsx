@@ -3,6 +3,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, FlatList, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +53,7 @@ const NEWS_DATA: NewsItem[] = [
 
 export default function News() {
     const [activeTab, setActiveTab] = useState<NewsCategory>('all');
+    const { colors, isDark } = useTheme();
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -67,19 +69,19 @@ export default function News() {
         : NEWS_DATA.filter(item => item.category === activeTab);
 
     const renderNewsCard = ({ item }: { item: NewsItem }) => (
-        <BlurView intensity={25} tint="light" style={styles.card}>
+        <BlurView intensity={isDark ? 25 : 80} tint={isDark ? "light" : "default"} style={[styles.card, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
             {item.image && (
                 <Image source={{ uri: item.image }} style={styles.cardImage} />
             )}
             <View style={styles.cardContent}>
-                <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
+                <View style={[styles.categoryBadge, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.2)' : 'rgba(124, 58, 237, 0.1)' }]}>
+                    <Text style={[styles.categoryText, { color: colors.tint }]}>{item.category.toUpperCase()}</Text>
                 </View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDescription} numberOfLines={2}>{item.description}</Text>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+                <Text style={[styles.cardDescription, { color: colors.textSecondary }]} numberOfLines={2}>{item.description}</Text>
                 <View style={styles.cardFooter}>
-                    <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.4)" />
-                    <Text style={styles.cardDate}>{item.date}</Text>
+                    <Ionicons name="calendar-outline" size={14} color={colors.border} />
+                    <Text style={[styles.cardDate, { color: colors.textSecondary, opacity: 0.6 }]}>{item.date}</Text>
                 </View>
             </View>
         </BlurView>
@@ -87,35 +89,34 @@ export default function News() {
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Background Glows matching home.tsx */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
             </View>
 
             <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Мэдээлэл</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Мэдээлэл</Text>
                 </View>
 
-                {/* Tab Selector */}
                 <View style={styles.tabContainer}>
-                    <BlurView intensity={30} tint="light" style={styles.tabBar}>
+                    <BlurView intensity={isDark ? 30 : 60} tint={isDark ? "light" : "default"} style={[styles.tabBar, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         {(['all', 'news', 'comment'] as const).map((tab) => (
                             <TouchableOpacity
                                 key={tab}
-                                style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
+                                style={[styles.tabButton, activeTab === tab && { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(124, 58, 237, 0.1)' }]}
                                 onPress={() => setActiveTab(tab)}
                             >
-                                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                                <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === tab && { color: colors.tint }]}>
                                     {tab === 'all' ? 'Бүгд' : tab === 'news' ? 'Мэдээ' : 'Сэтгэгдэл'}
                                 </Text>
                             </TouchableOpacity>
@@ -131,7 +132,7 @@ export default function News() {
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>Одоогоор мэдээлэл байхгүй байна.</Text>
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Одоогоор мэдээлэл байхгүй байна.</Text>
                         </View>
                     }
                 />

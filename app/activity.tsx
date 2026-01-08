@@ -5,11 +5,13 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, FlatList, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getTransactionHistory, TransactionHistoryResponse } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 type FilterType = 'all' | 'income' | 'expense';
 
 export default function Activity() {
     const { t, i18n } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const [transactions, setTransactions] = useState<TransactionHistoryResponse['data']>([]);
     const [loading, setLoading] = useState(true);
@@ -101,6 +103,8 @@ export default function Activity() {
                     {
                         opacity: fadeAnim,
                         transform: [{ translateY: slideAnim }],
+                        backgroundColor: colors.glassBackground,
+                        borderColor: colors.glassBorder,
                     }
                 ]}
             >
@@ -117,8 +121,8 @@ export default function Activity() {
                     />
                 </LinearGradient>
                 <View style={styles.detailsContainer}>
-                    <Text style={styles.description}>{item.description || item.type}</Text>
-                    <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+                    <Text style={[styles.description, { color: colors.text }]}>{item.description || item.type}</Text>
+                    <Text style={[styles.date, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
                 </View>
                 <Text style={[styles.amount, { color: isIncome ? '#4ADE80' : '#F87171' }]}>
                     {isIncome ? '+' : '-'}₮{item.amount.toFixed(2)}
@@ -129,12 +133,12 @@ export default function Activity() {
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             <Animated.View
                 style={[
                     styles.header,
@@ -145,13 +149,13 @@ export default function Activity() {
                 ]}
             >
                 <TouchableOpacity
-                    style={styles.backButton}
+                    style={[styles.backButton, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}
                     onPress={() => router.back()}
                     activeOpacity={0.7}
                 >
-                    <Ionicons name="chevron-back" size={24} color="white" />
+                    <Ionicons name="chevron-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{t('activity.title')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('activity.title')}</Text>
                 <View style={{ width: 44 }} />
             </Animated.View>
             <Animated.View
@@ -160,6 +164,8 @@ export default function Activity() {
                     {
                         opacity: fadeAnim,
                         transform: [{ translateY: slideAnim }],
+                        backgroundColor: colors.glassBackground,
+                        borderColor: colors.glassBorder,
                     }
                 ]}
             >
@@ -173,11 +179,11 @@ export default function Activity() {
                         </LinearGradient>
                     </View>
                     <View>
-                        <Text style={styles.statLabel}>{t('activity.income')}</Text>
-                        <Text style={styles.statValue}>{`₮${stats.income.toFixed(2)}`}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('activity.income')}</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{`₮${stats.income.toFixed(2)}`}</Text>
                     </View>
                 </View>
-                <View style={styles.statDivider} />
+                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                     <View style={styles.statIconContainer}>
                         <LinearGradient
@@ -188,8 +194,8 @@ export default function Activity() {
                         </LinearGradient>
                     </View>
                     <View>
-                        <Text style={styles.statLabel}>{t('activity.expense')}</Text>
-                        <Text style={styles.statValue}>{`₮${stats.expense.toFixed(2)}`}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('activity.expense')}</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{`₮${stats.expense.toFixed(2)}`}</Text>
                     </View>
                 </View>
             </Animated.View>
@@ -203,30 +209,30 @@ export default function Activity() {
                 ]}
             >
                 <TouchableOpacity
-                    style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+                    style={[styles.filterChip, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }, filter === 'all' && { backgroundColor: colors.tint, borderColor: colors.tint }]}
                     onPress={() => setFilter('all')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>{t('activity.all')}</Text>
+                    <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'all' && { color: 'white' }]}>{t('activity.all')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.filterChip, filter === 'income' && styles.filterChipActive]}
+                    style={[styles.filterChip, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }, filter === 'income' && { backgroundColor: colors.tint, borderColor: colors.tint }]}
                     onPress={() => setFilter('income')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>{t('activity.income')}</Text>
+                    <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'income' && { color: 'white' }]}>{t('activity.income')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.filterChip, filter === 'expense' && styles.filterChipActive]}
+                    style={[styles.filterChip, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }, filter === 'expense' && { backgroundColor: colors.tint, borderColor: colors.tint }]}
                     onPress={() => setFilter('expense')}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>{t('activity.expense')}</Text>
+                    <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'expense' && { color: 'white' }]}>{t('activity.expense')}</Text>
                 </TouchableOpacity>
             </Animated.View>
             {loading && !refreshing ? (
                 <View style={styles.center}>
-                    <ActivityIndicator color="#A78BFA" size="large" />
+                    <ActivityIndicator color={colors.tint} size="large" />
                 </View>
             ) : (
                 <FlatList
@@ -239,8 +245,8 @@ export default function Activity() {
                     }
                     ListEmptyComponent={
                         <View style={styles.center}>
-                            <Ionicons name="receipt-outline" size={64} color="rgba(255,255,255,0.3)" />
-                            <Text style={styles.emptyText}>{t('activity.noTransactions')}</Text>
+                            <Ionicons name="receipt-outline" size={64} color={colors.border} />
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('activity.noTransactions')}</Text>
                         </View>
                     }
                 />

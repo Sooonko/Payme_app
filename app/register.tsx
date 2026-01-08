@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { registerUser } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function Register() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -282,7 +285,9 @@ export default function Register() {
                 password
             });
 
-            if (response.success) {
+            if (response.success && response.data) {
+                await SecureStore.setItemAsync('userToken', response.data.token);
+                await SecureStore.setItemAsync('userInfo', JSON.stringify(response.data.user));
                 Alert.alert(t('register.success.title'), t('register.success.message'), [
                     { text: t('register.success.ok'), onPress: () => router.push('/home') }
                 ]);
@@ -299,12 +304,12 @@ export default function Register() {
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -338,11 +343,11 @@ export default function Register() {
                                     }),
                                 }}
                             >
-                                <Ionicons name="person-add" size={48} color="#A78BFA" />
+                                <Ionicons name="person-add" size={48} color={colors.tint} />
                             </Animated.View>
                         </Animated.View>
-                        <Text style={styles.title}>{t('register.title')}</Text>
-                        <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
+                        <Text style={[styles.title, { color: colors.text }]}>{t('register.title')}</Text>
+                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('register.subtitle')}</Text>
                     </View>
 
                     {/* Form Container */}
@@ -378,10 +383,11 @@ export default function Register() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                nameFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                nameFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.name && styles.inputError
                             ]}>
-                                <Ionicons name="person-outline" size={20} color={nameFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="person-outline" size={20} color={nameFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={name}
                                     onChangeText={(text) => {
@@ -391,8 +397,9 @@ export default function Register() {
                                     onFocus={() => handleFocus('name')}
                                     onBlur={() => handleBlur('name', name)}
                                     placeholder={!nameFocused ? t('register.name') : ""}
-                                    placeholderTextColor="#8F92A1"
-                                    style={styles.input}
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                             </View>
                             {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
@@ -429,10 +436,11 @@ export default function Register() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                emailFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                emailFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.email && styles.inputError
                             ]}>
-                                <Ionicons name="mail-outline" size={20} color={emailFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="mail-outline" size={20} color={emailFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={email}
                                     onChangeText={(text) => {
@@ -442,10 +450,11 @@ export default function Register() {
                                     onFocus={() => handleFocus('email')}
                                     onBlur={() => handleBlur('email', email)}
                                     placeholder={!emailFocused ? t('register.email') : ""}
-                                    placeholderTextColor="#8F92A1"
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                             </View>
                             {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
@@ -482,10 +491,11 @@ export default function Register() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                phoneFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                phoneFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.phone && styles.inputError
                             ]}>
-                                <Ionicons name="call-outline" size={20} color={phoneFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="call-outline" size={20} color={phoneFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={phoneNumber}
                                     onChangeText={(text) => {
@@ -495,9 +505,10 @@ export default function Register() {
                                     onFocus={() => handleFocus('phone')}
                                     onBlur={() => handleBlur('phone', phoneNumber)}
                                     placeholder={!phoneFocused ? t('register.phone') : ""}
-                                    placeholderTextColor="#8F92A1"
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                                     keyboardType="phone-pad"
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                             </View>
                             {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
@@ -534,10 +545,11 @@ export default function Register() {
                             </Animated.Text>
                             <View style={[
                                 styles.inputContainer,
-                                passwordFocused && styles.inputFocused,
+                                { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                passwordFocused && [styles.inputFocused, { borderColor: colors.tint, backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)' }],
                                 errors.password && styles.inputError
                             ]}>
-                                <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? "#A78BFA" : "#8F92A1"} style={styles.icon} />
+                                <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? colors.tint : colors.tabIconDefault} style={styles.icon} />
                                 <TextInput
                                     value={password}
                                     onChangeText={(text) => {
@@ -547,11 +559,12 @@ export default function Register() {
                                     onFocus={() => handleFocus('password')}
                                     onBlur={() => handleBlur('password', password)}
                                     placeholder={!passwordFocused ? t('register.password') : ""}
-                                    placeholderTextColor="#8F92A1"
+                                    placeholderTextColor={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)"}
                                     secureTextEntry={!showPassword}
                                     autoCapitalize="none"
                                     autoCorrect={false}
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.text }]}
+                                    selectionColor={colors.tint}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowPassword(!showPassword)}
@@ -560,7 +573,7 @@ export default function Register() {
                                     <Ionicons
                                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}
-                                        color={passwordFocused ? "#A78BFA" : "#8F92A1"}
+                                        color={passwordFocused ? colors.tint : colors.tabIconDefault}
                                     />
                                 </TouchableOpacity>
                             </View>
@@ -575,10 +588,10 @@ export default function Register() {
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
-                                    colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
+                                    colors={isDark ? ['#A78BFA', '#8B5CF6', '#7C3AED'] : ['#8B5CF6', '#7C3AED', '#6D28D9']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
-                                    style={styles.registerButton}
+                                    style={[styles.registerButton, { shadowColor: colors.tint }]}
                                 >
                                     {loading && (
                                         <Animated.View
@@ -610,8 +623,8 @@ export default function Register() {
                         </Animated.View>
 
                         {/* Login Link */}
-                        <Text style={styles.loginText}>
-                            {t('register.hasAccount')} <Text style={styles.loginLink} onPress={() => router.push('/login')}>{t('register.login')}</Text>
+                        <Text style={[styles.loginText, { color: colors.textSecondary }]}>
+                            {t('register.hasAccount')} <Text style={[styles.loginLink, { color: colors.tint }]} onPress={() => router.push('/login')}>{t('register.login')}</Text>
                         </Text>
                     </View>
                 </ScrollView>
@@ -656,12 +669,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: 'white',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.6)',
         fontWeight: '400',
     },
     formContainer: {
@@ -682,12 +693,10 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 16,
         borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     inputFocused: {
         borderColor: '#A78BFA',
@@ -709,7 +718,6 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: 'white',
         fontSize: 16,
         fontWeight: '500',
     },
@@ -733,7 +741,6 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         marginTop: 8,
         marginBottom: 24,
-        shadowColor: '#A78BFA',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -750,13 +757,11 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
     loginText: {
-        color: 'rgba(255, 255, 255, 0.7)',
         textAlign: 'center',
         fontSize: 15,
         fontWeight: '500',
     },
     loginLink: {
-        color: '#A78BFA',
         fontWeight: '700',
     },
 });

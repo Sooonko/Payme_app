@@ -157,6 +157,7 @@ import * as SecureStore from 'expo-secure-store';
 export const getWallet = async (): Promise<WalletResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
 
         const response = await fetch(`${API_BASE_URL}/api/v1/wallets/my-wallet`, {
             method: 'GET',
@@ -166,9 +167,11 @@ export const getWallet = async (): Promise<WalletResponse> => {
             },
         });
 
-        console.log('Get Wallet Status:', response.status);
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
+
         const text = await response.text();
-        console.log('Get Wallet Response:', text);
 
         try {
             const responseData = JSON.parse(text);
@@ -200,6 +203,7 @@ export interface TopUpResponse {
 export const initiateTopUp = async (amount: number): Promise<TopUpResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/topup/initiate`, {
             method: 'POST',
             headers: {
@@ -220,6 +224,7 @@ export const initiateTopUp = async (amount: number): Promise<TopUpResponse> => {
 export const confirmTopUp = async (transactionId: number): Promise<TopUpResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/topup/confirm/${transactionId}`, {
             method: 'POST',
             headers: {
@@ -251,8 +256,8 @@ export interface UserSearchResponse {
 export const searchUsers = async (query: string): Promise<UserSearchResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const url = `${API_BASE_URL}/api/v1/users/search?query=${encodeURIComponent(query)}`;
-        console.log('Searching users with URL:', url);
 
         const response = await fetch(url, {
             method: 'GET',
@@ -262,9 +267,7 @@ export const searchUsers = async (query: string): Promise<UserSearchResponse> =>
             },
         });
 
-        console.log('Search response status:', response.status);
         const text = await response.text();
-        console.log('Search response body:', text);
 
         const responseData = JSON.parse(text);
         return responseData;
@@ -299,6 +302,7 @@ export interface SendMoneyResponse {
 export const sendMoney = async (data: SendMoneyRequest): Promise<SendMoneyResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/transactions/send`, {
             method: 'POST',
             headers: {
@@ -332,6 +336,8 @@ export interface UserProfileResponse {
 export const getUserProfile = async (): Promise<UserProfileResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
+
         const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
             method: 'GET',
             headers: {
@@ -339,6 +345,10 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
                 'Authorization': `Bearer ${token}`,
             },
         });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
 
         const responseData = await response.json();
         return responseData;
@@ -364,6 +374,7 @@ export interface UpdateProfileResponse {
 export const updateUserProfile = async (data: UpdateProfileRequest): Promise<UpdateProfileResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/users/update`, {
             method: 'PUT',
             headers: {
@@ -372,6 +383,10 @@ export const updateUserProfile = async (data: UpdateProfileRequest): Promise<Upd
             },
             body: JSON.stringify(data),
         });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
 
         const responseData = await response.json();
         return responseData;
@@ -401,6 +416,7 @@ export interface TransactionHistoryResponse {
 export const getTransactionHistory = async (): Promise<TransactionHistoryResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/transactions/history`, {
             method: 'GET',
             headers: {
@@ -408,6 +424,10 @@ export const getTransactionHistory = async (): Promise<TransactionHistoryRespons
                 'Authorization': `Bearer ${token}`,
             },
         });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
 
         const responseData = await response.json();
         return responseData;
@@ -454,6 +474,7 @@ export interface AddCardResponse {
 export const addCard = async (data: AddCardRequest): Promise<AddCardResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/cards/add`, {
             method: 'POST',
             headers: {
@@ -462,6 +483,10 @@ export const addCard = async (data: AddCardRequest): Promise<AddCardResponse> =>
             },
             body: JSON.stringify(data),
         });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
 
         const responseData = await response.json();
         return responseData;
@@ -493,6 +518,7 @@ export interface GetCardsResponse {
 export const getCards = async (): Promise<GetCardsResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
+        if (!token) throw new Error('Authentication required');
         const response = await fetch(`${API_BASE_URL}/api/v1/cards`, {
             method: 'GET',
             headers: {
@@ -500,6 +526,10 @@ export const getCards = async (): Promise<GetCardsResponse> => {
                 'Authorization': `Bearer ${token}`,
             },
         });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
 
         const responseData = await response.json();
         return responseData;
@@ -514,17 +544,20 @@ export const getCards = async (): Promise<GetCardsResponse> => {
 // ============================================
 
 export interface LoanProduct {
-    id: string;
-    name: string;
-    description: string;
-    interestRateMonthly: number;
-    penaltyRateDaily: number;
+    productId: string;
+    productName: string;
+    description: string | null;
     minAmount: number;
     maxAmount: number;
+    maxEligibleAmount: number;
+    interestRateMonthly: number;
+    penaltyRateDaily: number;
     minTenorMonths: number;
     maxTenorMonths: number;
-    createdAt: string;
-    updatedAt: string;
+    statusMessage: string;
+    checked: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface LoanApplication {
@@ -567,6 +600,14 @@ export type RepayLoanResponse = GenericResponse<null>;
 export type GetMyLoansResponse = GenericResponse<ActiveLoan[]>;
 export type GetLoanProductsResponse = GenericResponse<LoanProduct[]>;
 
+export interface LoanEligibilityData {
+    success: boolean;
+    message: string;
+    options?: LoanProduct[];
+}
+
+export type GetLoanEligibilityResponse = GenericResponse<LoanEligibilityData>;
+
 export const getLoanProducts = async (): Promise<GetLoanProductsResponse> => {
     try {
         const token = await SecureStore.getItemAsync('userToken');
@@ -578,10 +619,41 @@ export const getLoanProducts = async (): Promise<GetLoanProductsResponse> => {
             },
         });
 
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
+
         const responseData = await response.json();
         return responseData;
     } catch (error) {
         console.error('Get Loan Products error:', error);
+        throw error;
+    }
+};
+
+export const checkLoanEligibility = async (productId?: string): Promise<GetLoanEligibilityResponse> => {
+    try {
+        const token = await SecureStore.getItemAsync('userToken');
+        const url = productId
+            ? `${API_BASE_URL}/api/v1/loans/eligibility?productId=${productId}`
+            : `${API_BASE_URL}/api/v1/loans/eligibility`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Check Loan Eligibility error:', error);
         throw error;
     }
 };
@@ -661,8 +733,28 @@ export const getMyLoans = async (): Promise<GetMyLoansResponse> => {
             },
         });
 
-        const responseData = await response.json();
-        return responseData;
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please login again.');
+        }
+
+        const text = await response.text();
+
+        if (!text) {
+            // Handle empty response if acceptable, or throw specific error
+            console.warn('Get My Loans returned empty response');
+            // Assuming empty response might mean no loans or error, but let's see what the backend usually returns.
+            // If we expect JSON, empty string is invalid.
+            // If status is 200 and body is empty, it's problematic if we expect JSON.
+            // For now, let's try to parse if text exists, otherwise return a default or throw clearer error.
+        }
+
+        try {
+            const responseData = JSON.parse(text);
+            return responseData;
+        } catch (e) {
+            console.error('Failed to parse JSON for Get My Loans:', e);
+            throw new Error(`Server returned ${response.status} with invalid JSON: ${text}`);
+        }
     } catch (error) {
         console.error('Get My Loans error:', error);
         throw error;

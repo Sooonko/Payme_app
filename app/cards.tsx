@@ -1,12 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardData, getCards } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function Cards() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const params = useLocalSearchParams();
     const [cards, setCards] = useState<CardData[]>([]);
@@ -79,25 +82,30 @@ export default function Cards() {
     };
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <LinearGradient
+            colors={colors.backgroundGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.container}
+        >
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack}>
-                    <Ionicons name="arrow-back" size={24} color="white" />
+                <TouchableOpacity onPress={handleBack} style={[styles.backButton, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{t('cards.title')}</Text>
-                <TouchableOpacity onPress={() => router.push('/add-card')}>
-                    <Ionicons name="add" size={24} color="white" />
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('cards.title')}</Text>
+                <TouchableOpacity onPress={() => router.push('/add-card')} style={[styles.backButton, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                    <Ionicons name="add" size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {loading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#A78BFA" />
-                        <Text style={styles.loadingText}>{t('cards.loading')}</Text>
+                        <ActivityIndicator size="large" color={colors.tint} />
+                        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('cards.loading')}</Text>
                     </View>
                 ) : (
                     <>
@@ -105,47 +113,47 @@ export default function Cards() {
                         <View style={styles.cardsSection}>
                             {cards.length > 0 ? (
                                 cards.map((card) => (
-                                    <View key={card.id} style={styles.cardItem}>
+                                    <View key={card.id} style={[styles.cardItem, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                                         <View style={styles.cardLeft}>
-                                            <View style={styles.cardIconContainer}>
-                                                <Ionicons name={getCardIcon(card.cardType)} size={24} color="#A78BFA" />
+                                            <View style={[styles.cardIconContainer, { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.1)' }]}>
+                                                <Ionicons name={getCardIcon(card.cardType)} size={24} color={colors.tint} />
                                             </View>
                                             <View>
                                                 <View style={styles.cardNameRow}>
-                                                    <Text style={styles.cardName}>{card.cardType}</Text>
+                                                    <Text style={[styles.cardName, { color: colors.text }]}>{card.cardType}</Text>
                                                     {card.isDefault && (
-                                                        <View style={styles.defaultBadge}>
+                                                        <View style={[styles.defaultBadge, { backgroundColor: colors.tint }]}>
                                                             <Text style={styles.defaultBadgeText}>{t('cards.badge')}</Text>
                                                         </View>
                                                     )}
                                                 </View>
-                                                <Text style={styles.cardNumber}>•••• •••• •••• {card.cardNumberLast4}</Text>
-                                                <Text style={styles.cardExpiry}>
+                                                <Text style={[styles.cardNumber, { color: colors.textSecondary }]}>•••• •••• •••• {card.cardNumberLast4}</Text>
+                                                <Text style={[styles.cardExpiry, { color: colors.textSecondary, opacity: 0.7 }]}>
                                                     Expires {String(card.expiryMonth).padStart(2, '0')}/{card.expiryYear}
                                                 </Text>
                                             </View>
                                         </View>
                                         <View style={styles.cardActions}>
                                             <TouchableOpacity
-                                                style={styles.actionButton}
+                                                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                                                 onPress={() => Alert.alert(t('common.info'), t('cards.actions.edit'))}
                                             >
-                                                <Ionicons name="create-outline" size={20} color="#A78BFA" />
+                                                <Ionicons name="create-outline" size={20} color={colors.tint} />
                                             </TouchableOpacity>
                                             <TouchableOpacity
-                                                style={styles.actionButton}
+                                                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                                                 onPress={() => handleDeleteCard(card.id)}
                                             >
-                                                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                                                <Ionicons name="trash-outline" size={20} color={colors.notification} />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
                                 ))
                             ) : (
                                 <View style={styles.emptyState}>
-                                    <Ionicons name="card-outline" size={64} color="rgba(255,255,255,0.3)" />
-                                    <Text style={styles.emptyStateText}>{t('cards.empty.title')}</Text>
-                                    <Text style={styles.emptyStateSubtext}>
+                                    <Ionicons name="card-outline" size={64} color={colors.border} />
+                                    <Text style={[styles.emptyStateText, { color: colors.text }]}>{t('cards.empty.title')}</Text>
+                                    <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
                                         {t('cards.empty.subtitle')}
                                     </Text>
                                 </View>
@@ -153,32 +161,39 @@ export default function Cards() {
 
                             {/* Add New Card Button */}
                             <TouchableOpacity
-                                style={styles.addCardButton}
+                                style={[styles.addCardButton, { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(124, 58, 237, 0.05)', borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : 'rgba(124, 58, 237, 0.2)' }]}
                                 onPress={() => router.push('/add-card')}
                             >
-                                <Ionicons name="add-circle-outline" size={24} color="#A78BFA" />
-                                <Text style={styles.addCardText}>{t('cards.button')}</Text>
+                                <Ionicons name="add-circle-outline" size={24} color={colors.tint} />
+                                <Text style={[styles.addCardText, { color: colors.tint }]}>{t('cards.button')}</Text>
                             </TouchableOpacity>
                         </View>
 
                         {/* Info Section */}
-                        <View style={styles.infoSection}>
-                            <Text style={styles.infoTitle}>{t('cards.info.title')}</Text>
-                            <Text style={styles.infoText}>
+                        <View style={[styles.infoSection, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                            <Text style={[styles.infoTitle, { color: colors.text }]}>{t('cards.info.title')}</Text>
+                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                                 {t('cards.info.text')}
                             </Text>
                         </View>
                     </>
                 )}
             </ScrollView>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1E2238',
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
     header: {
         flexDirection: 'row',
@@ -215,12 +230,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
         borderRadius: 16,
         padding: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: 'rgba(167, 139, 250, 0.2)',
     },
     cardLeft: {
         flexDirection: 'row',
@@ -313,10 +326,10 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     infoSection: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
         borderRadius: 16,
         padding: 16,
         marginBottom: 32,
+        borderWidth: 1,
     },
     infoTitle: {
         fontSize: 16,

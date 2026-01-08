@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -11,6 +12,7 @@ type Mode = 'send' | 'qr' | 'invoice';
 
 export default function Scan() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
     const [amount, setAmount] = useState('0');
     const [isQRMode, setIsQRMode] = useState(false);
 
@@ -70,12 +72,12 @@ export default function Scan() {
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Background Glows matching home.tsx */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -96,27 +98,27 @@ export default function Scan() {
                             <BlurView intensity={10} tint="light" style={styles.scanBlur} />
                             <TouchableOpacity
                                 onPress={() => setIsQRMode(false)}
-                                style={styles.closeQR}
+                                style={[styles.closeQR, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}
                             >
-                                <Ionicons name="close" size={30} color="white" />
+                                <Ionicons name="close" size={30} color={colors.text} />
                             </TouchableOpacity>
-                            <Ionicons name="scan-outline" size={100} color="rgba(255,255,255,0.2)" />
+                            <Ionicons name="scan-outline" size={100} color={colors.border} />
                         </View>
-                        <Text style={styles.scanTitle}>Scan QR Code</Text>
+                        <Text style={[styles.scanTitle, { color: colors.text }]}>Scan QR Code</Text>
                     </View>
                 ) : (
                     <>
                         {/* CARD 1: AMOUNT DISPLAY */}
-                        <BlurView intensity={25} tint="light" style={styles.amountCard}>
-                            <Text style={styles.amountLabel}>Total Amount</Text>
+                        <BlurView intensity={isDark ? 25 : 80} tint={isDark ? "light" : "default"} style={[styles.amountCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                            <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Total Amount</Text>
                             <View style={styles.amountRow}>
-                                <Text style={styles.amountText}>{parseInt(amount).toLocaleString()}</Text>
-                                <Text style={styles.currencyText}>₮</Text>
+                                <Text style={[styles.amountText, { color: colors.text, textShadowColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.1)' }]}>{parseInt(amount).toLocaleString()}</Text>
+                                <Text style={[styles.currencyText, { color: colors.textSecondary }]}>₮</Text>
                             </View>
                         </BlurView>
 
                         {/* CARD 2: KEYBOARD */}
-                        <BlurView intensity={20} tint="light" style={styles.keyboardCard}>
+                        <BlurView intensity={isDark ? 20 : 60} tint={isDark ? "light" : "default"} style={[styles.keyboardCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                             <View style={styles.keypadGrid}>
                                 {keys.map((row, rowIndex) => (
                                     <View key={rowIndex} style={styles.keypadRow}>
@@ -128,9 +130,9 @@ export default function Scan() {
                                                 activeOpacity={0.5}
                                             >
                                                 {key === 'backspace' ? (
-                                                    <Ionicons name="backspace-outline" size={28} color="white" />
+                                                    <Ionicons name="backspace-outline" size={28} color={colors.text} />
                                                 ) : (
-                                                    <Text style={styles.keyText}>{key}</Text>
+                                                    <Text style={[styles.keyText, { color: colors.text }]}>{key}</Text>
                                                 )}
                                             </TouchableOpacity>
                                         ))}
@@ -141,28 +143,27 @@ export default function Scan() {
                     </>
                 )}
 
-                {/* CARD 3: MODE ACTIONS */}
-                <BlurView intensity={30} tint="light" style={styles.actionCard}>
+                <BlurView intensity={isDark ? 30 : 60} tint={isDark ? "light" : "default"} style={[styles.actionCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                     <View style={styles.actionGrid}>
                         <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('send')}>
-                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(79, 70, 229, 0.2)' }]}>
-                                <Ionicons name="paper-plane-outline" size={24} color="#818CF8" />
+                            <View style={[styles.actionIconPill, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.2)' : 'rgba(124, 58, 237, 0.1)' }]}>
+                                <Ionicons name="paper-plane-outline" size={24} color={isDark ? "#818CF8" : colors.tint} />
                             </View>
-                            <Text style={styles.actionLabel}>Send</Text>
+                            <Text style={[styles.actionLabel, { color: colors.text }]}>Send</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('qr')}>
-                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(147, 51, 234, 0.2)' }]}>
-                                <Ionicons name="qr-code-outline" size={24} color="#C084FC" />
+                            <View style={[styles.actionIconPill, { backgroundColor: isDark ? 'rgba(147, 51, 234, 0.2)' : 'rgba(147, 51, 234, 0.1)' }]}>
+                                <Ionicons name="qr-code-outline" size={24} color={isDark ? "#C084FC" : "#9333EA"} />
                             </View>
-                            <Text style={styles.actionLabel}>QR Scan</Text>
+                            <Text style={[styles.actionLabel, { color: colors.text }]}>QR Scan</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.actionItem} onPress={() => handleAction('invoice')}>
-                            <View style={[styles.actionIconPill, { backgroundColor: 'rgba(236, 72, 153, 0.2)' }]}>
-                                <Ionicons name="receipt-outline" size={24} color="#F472B6" />
+                            <View style={[styles.actionIconPill, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.2)' : 'rgba(236, 72, 153, 0.1)' }]}>
+                                <Ionicons name="receipt-outline" size={24} color={isDark ? "#F472B6" : "#DB2777"} />
                             </View>
-                            <Text style={styles.actionLabel}>Invoice</Text>
+                            <Text style={[styles.actionLabel, { color: colors.text }]}>Invoice</Text>
                         </TouchableOpacity>
                     </View>
                 </BlurView>

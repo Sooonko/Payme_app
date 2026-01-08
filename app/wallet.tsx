@@ -5,9 +5,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { sendMoney, UserSearchResponse } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function Wallet() {
     const { t } = useTranslation();
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const params = useLocalSearchParams();
     const [amount, setAmount] = useState('');
@@ -106,12 +108,12 @@ export default function Wallet() {
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <Animated.View
@@ -123,7 +125,7 @@ export default function Wallet() {
                     }
                 ]}
             >
-                <Text style={styles.headerTitle}>{t('wallet.title')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('wallet.title')}</Text>
             </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -134,19 +136,21 @@ export default function Wallet() {
                         {
                             opacity: fadeAnim,
                             transform: [{ translateY: slideAnim }],
+                            backgroundColor: colors.glassBackground,
+                            borderColor: colors.glassBorder,
                         }
                     ]}
                 >
 
                     <View style={styles.amountContainer}>
-                        <Text style={styles.currencySymbol}>₮</Text>
+                        <Text style={[styles.currencySymbol, { color: colors.tint }]}>₮</Text>
                         <TextInput
                             value={amount}
                             onChangeText={setAmount}
                             placeholder="0.00"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            placeholderTextColor={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}
                             keyboardType="numeric"
-                            style={styles.amountInput}
+                            style={[styles.amountInput, { color: colors.text }]}
                         />
                     </View>
                 </Animated.View>
@@ -165,13 +169,15 @@ export default function Wallet() {
                                 key={amt}
                                 style={[
                                     styles.quickAmountChip,
-                                    amount === amt && styles.quickAmountChipActive
+                                    { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder },
+                                    amount === amt && { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.2)' : 'rgba(124, 58, 237, 0.1)', borderColor: colors.tint }
                                 ]}
                                 onPress={() => setAmount(amt)}
                                 activeOpacity={0.7}
                             >
                                 <Text style={[
-                                    amount === amt && styles.quickAmountTextActive
+                                    { color: colors.textSecondary },
+                                    amount === amt && { color: colors.tint, fontWeight: 'bold' }
                                 ]}>₮{amt}</Text>
                             </TouchableOpacity>
                         ))}
@@ -187,24 +193,24 @@ export default function Wallet() {
                         }}
                     >
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>{t('wallet.sendTo')}</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('wallet.sendTo')}</Text>
                             <TouchableOpacity onPress={() => {
                                 setSelectedUser(null);
                                 router.setParams({ userId: '', name: '', phone: '', walletId: '' });
                             }}>
-                                <Text style={styles.changeText}>{t('wallet.change')}</Text>
+                                <Text style={[styles.changeText, { color: colors.tint }]}>{t('wallet.change')}</Text>
                             </TouchableOpacity>
                         </View>
-                        <View style={styles.recipientCard}>
+                        <View style={[styles.recipientCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                             <View style={styles.methodLeft}>
                                 <View style={styles.recipientAvatar}>
                                     <Text style={styles.avatarText}>{selectedUser.name.charAt(0).toUpperCase()}</Text>
                                 </View>
                                 <View style={styles.recipientInfo}>
-                                    <Text style={styles.recipientName}>{selectedUser.name}</Text>
+                                    <Text style={[styles.recipientName, { color: colors.text }]}>{selectedUser.name}</Text>
                                     <View style={styles.phoneRow}>
-                                        <Ionicons name="call-outline" size={14} color="rgba(255,255,255,0.5)" />
-                                        <Text style={styles.recipientPhone}>{selectedUser.phone}</Text>
+                                        <Ionicons name="call-outline" size={14} color={colors.textSecondary} />
+                                        <Text style={[styles.recipientPhone, { color: colors.textSecondary }]}>{selectedUser.phone}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -229,7 +235,7 @@ export default function Wallet() {
                         activeOpacity={0.9}
                     >
                         <LinearGradient
-                            colors={['#A78BFA', '#8B5CF6', '#7C3AED']}
+                            colors={isDark ? ['#A78BFA', '#8B5CF6', '#7C3AED'] : ['#8B5CF6', '#7C3AED', '#6D28D9']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={styles.confirmButtonGradient}
@@ -261,15 +267,15 @@ export default function Wallet() {
                 animationType="fade"
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.successIcon}>
                             <Ionicons name="checkmark-circle" size={80} color="#4ADE80" />
                         </View>
-                        <Text style={styles.successTitle}>{t('wallet.success.title')}</Text>
+                        <Text style={[styles.successTitle, { color: colors.text }]}>{t('wallet.success.title')}</Text>
                         <Text style={styles.successAmount}>₮{parseFloat(amount || '0').toFixed(2)}</Text>
-                        <Text style={styles.successRecipient}>{t('wallet.success.to')} {selectedUser?.name}</Text>
+                        <Text style={[styles.successRecipient, { color: colors.textSecondary }]}>{t('wallet.success.to')} {selectedUser?.name}</Text>
                         <TouchableOpacity
-                            style={styles.doneButton}
+                            style={[styles.doneButton, { backgroundColor: colors.tint }]}
                             onPress={() => {
                                 setShowSuccessModal(false);
                                 setAmount('');

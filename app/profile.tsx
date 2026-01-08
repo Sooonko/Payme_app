@@ -1,45 +1,69 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUserProfile, UserProfileResponse } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
+
+// Memoized Background component to prevent flicker during language changes
+const ProfileBackground = React.memo(({ colors, isDark }: { colors: any, isDark: boolean }) => (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+        <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+        <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
+    </View>
+));
 
 export default function Profile() {
     const { t, i18n } = useTranslation();
     const router = useRouter();
     const [user, setUser] = useState<UserProfileResponse['data'] | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Default to false to prevent initial loading "cover"
     const [languageModalVisible, setLanguageModalVisible] = useState(false);
+    const [themeModalVisible, setThemeModalVisible] = useState(false);
+    const { colors, isDark, mode, setMode } = useTheme();
 
-    // Animation values
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(50)).current;
+    // Unified animation values with static initial states
+    // Initialize to final values (1 and 0) to prevent flicker on re-renders/re-mounts
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const slideAnim = useRef(new Animated.Value(0)).current;
+    const hasAnimated = useRef(false);
+
+    const isInitialLoad = useRef(true);
 
     useFocusEffect(
         useCallback(() => {
-            loadProfile();
+            loadProfile(isInitialLoad.current);
+            isInitialLoad.current = false;
 
-            // Start entrance animations
-            Animated.parallel([
-                Animated.timing(fadeAnim, {
-                    toValue: 1,
-                    duration: 800,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(slideAnim, {
-                    toValue: 0,
-                    duration: 800,
-                    useNativeDriver: true,
-                }),
-            ]).start();
+            // Only run entrance animations if they haven't run before
+            if (!hasAnimated.current) {
+                fadeAnim.setValue(0);
+                slideAnim.setValue(50);
+
+                Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                        toValue: 1,
+                        duration: 800,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(slideAnim, {
+                        toValue: 0,
+                        duration: 800,
+                        useNativeDriver: true,
+                    }),
+                ]).start(() => {
+                    hasAnimated.current = true;
+                });
+            }
         }, [])
     );
 
-    const loadProfile = async () => {
+    const loadProfile = async (isInitial = false) => {
+        if (isInitial && !user) setLoading(true);
         try {
             const response = await getUserProfile();
             if (response.success) {
@@ -48,7 +72,7 @@ export default function Profile() {
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
+            if (isInitial) setLoading(false);
         }
     };
 
@@ -65,29 +89,27 @@ export default function Profile() {
     };
 
     const changeLanguage = async (lang: string) => {
-        try {
-            await i18n.changeLanguage(lang);
-            setLanguageModalVisible(false);
-        } catch (error) {
-            console.error('Failed to change language', error);
-        }
+        setLanguageModalVisible(false);
+        // Wait for modal to close before changing language to prevent visual jank
+        setTimeout(async () => {
+            try {
+                await i18n.changeLanguage(lang);
+            } catch (error) {
+                console.error('Failed to change language', error);
+            }
+        }, 300);
     };
 
     return (
         <LinearGradient
-            colors={['#1a1642', '#221a52', '#311a63', '#421a52', '#4a1a4a']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-            {/* Background Glows */}
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: '#4F46E5', width: 400, height: 400, opacity: 0.18 }]} />
-                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: '#4f7abdff', width: 350, height: 350, opacity: 0.15 }]} />
-                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: '#ae4479ff', width: 380, height: 380, opacity: 0.18 }]} />
-            </View>
+            <ProfileBackground colors={colors} isDark={isDark} />
 
             {/* Header */}
             <Animated.View
@@ -100,7 +122,7 @@ export default function Profile() {
                 ]}
             >
 
-                <Text style={styles.headerTitle}>{t('profile.title')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.title')}</Text>
             </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -111,23 +133,24 @@ export default function Profile() {
                         {
                             opacity: fadeAnim,
                             transform: [{ translateY: slideAnim }],
+                            borderColor: colors.glassBorder,
                         }
                     ]}
                 >
-                    <BlurView intensity={30} tint="light" style={styles.profileCard}>
+                    <View style={[styles.profileCard, { backgroundColor: colors.glassBackground }]}>
                         <View style={styles.avatarContainer}>
                             <LinearGradient
-                                colors={['#A78BFA', '#8B5CF6']}
+                                colors={['#A78BFA', colors.tint]}
                                 style={styles.avatarGradient}
                             >
-                                <View style={styles.avatar}>
+                                <View style={[styles.avatar, { backgroundColor: isDark ? '#1E1B4B' : '#E0E7FF' }]}>
                                     <Text style={styles.avatarText}>
                                         {user ? user.name.charAt(0).toUpperCase() : '👤'}
                                     </Text>
                                 </View>
                             </LinearGradient>
                             <TouchableOpacity
-                                style={styles.editAvatarButton}
+                                style={[styles.editAvatarButton, { backgroundColor: colors.tint, borderColor: isDark ? '#1E1B4B' : '#E0E7FF' }]}
                                 onPress={() => router.push({
                                     pathname: '/edit-profile',
                                     params: {
@@ -142,23 +165,33 @@ export default function Profile() {
                         </View>
 
                         {loading ? (
-                            <ActivityIndicator color="#A78BFA" style={{ marginTop: 16 }} />
+                            <ActivityIndicator color={colors.tint} style={{ marginTop: 16 }} />
                         ) : (
                             <>
-                                <Text style={styles.name}>{user ? user.name : t('profile.guest')}</Text>
-                                <Text style={styles.email}>{user ? user.phone : ''}</Text>
-                                {user?.email && <Text style={styles.emailSecondary}>{user.email}</Text>}
+                                <Text style={[styles.name, { color: colors.text }]}>{user ? user.name : t('profile.guest')}</Text>
+                                <View style={styles.contactInfo}>
+                                    <View style={styles.contactItem}>
+                                        <Ionicons name="call-outline" size={16} color={colors.textSecondary} />
+                                        <Text style={[styles.contactText, { color: colors.text }]}>{user ? user.phone : ''}</Text>
+                                    </View>
+                                    {user?.email && (
+                                        <View style={styles.contactItem}>
+                                            <Ionicons name="mail-outline" size={16} color={colors.textSecondary} />
+                                            <Text style={[styles.contactTextSecondary, { color: colors.textSecondary }]}>{user.email}</Text>
+                                        </View>
+                                    )}
+                                </View>
                                 {user?.createdAt && (
-                                    <View style={styles.memberSince}>
-                                        <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.5)" />
-                                        <Text style={styles.memberSinceText}>
+                                    <View style={[styles.memberSince, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                                        <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                                        <Text style={[styles.memberSinceText, { color: colors.textSecondary }]}>
                                             {formatMemberSince(user.createdAt)}
                                         </Text>
                                     </View>
                                 )}
                             </>
                         )}
-                    </BlurView>
+                    </View>
                 </Animated.View>
 
                 {/* Menu Items */}
@@ -171,9 +204,9 @@ export default function Profile() {
                         }
                     ]}
                 >
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             onPress={() => router.push({
                                 pathname: '/edit-profile',
                                 params: {
@@ -186,20 +219,20 @@ export default function Profile() {
                         >
                             <View style={styles.menuLeft}>
                                 <LinearGradient
-                                    colors={['#A78BFA', '#8B5CF6']}
+                                    colors={['#A78BFA', colors.tint]}
                                     style={styles.menuIconGradient}
                                 >
                                     <Ionicons name="person-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.editProfile')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.editProfile')}</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
 
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             activeOpacity={0.7}
                         >
                             <View style={styles.menuLeft}>
@@ -209,15 +242,15 @@ export default function Profile() {
                                 >
                                     <Ionicons name="shield-checkmark-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.security')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.security')}</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
 
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             onPress={() => router.push({ pathname: '/cards', params: { from: 'profile' } })}
                             activeOpacity={0.7}
                         >
@@ -228,15 +261,15 @@ export default function Profile() {
                                 >
                                     <Ionicons name="card-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.myCards')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.myCards')}</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
 
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             activeOpacity={0.7}
                         >
                             <View style={styles.menuLeft}>
@@ -246,15 +279,15 @@ export default function Profile() {
                                 >
                                     <Ionicons name="help-circle-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.helpSupport')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.helpSupport')}</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
 
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             activeOpacity={0.7}
                         >
                             <View style={styles.menuLeft}>
@@ -264,35 +297,59 @@ export default function Profile() {
                                 >
                                     <Ionicons name="settings-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.settings')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.settings')}</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
 
-                    <BlurView intensity={25} tint="light" style={styles.menuItemWrapper}>
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <TouchableOpacity
-                            style={styles.menuItem}
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
                             onPress={() => setLanguageModalVisible(true)}
                             activeOpacity={0.7}
                         >
                             <View style={styles.menuLeft}>
                                 <LinearGradient
-                                    colors={['#8B5CF6', '#7C3AED']}
+                                    colors={['#8B5CF6', colors.tint]}
                                     style={styles.menuIconGradient}
                                 >
                                     <Ionicons name="language-outline" size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={styles.menuText}>{t('profile.language')}</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.language')}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Text style={{ color: 'rgba(255,255,255,0.5)', marginRight: 8 }}>
+                                <Text style={{ color: colors.textSecondary, marginRight: 8 }}>
                                     {i18n.language === 'mn' ? 'Монгол' : 'English'}
                                 </Text>
-                                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                             </View>
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
+
+                    <View style={[styles.menuItemWrapper, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                        <TouchableOpacity
+                            style={[styles.menuItem, { backgroundColor: colors.cardBackground }]}
+                            onPress={() => setThemeModalVisible(true)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.menuLeft}>
+                                <LinearGradient
+                                    colors={['#60A5FA', '#3B82F6']}
+                                    style={styles.menuIconGradient}
+                                >
+                                    <Ionicons name={isDark ? "moon-outline" : "sunny-outline"} size={20} color="white" />
+                                </LinearGradient>
+                                <Text style={[styles.menuText, { color: colors.text }]}>Theme</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={{ color: colors.textSecondary, marginRight: 8 }}>
+                                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
                 </Animated.View>
 
                 {/* Logout Button */}
@@ -309,8 +366,8 @@ export default function Profile() {
                             colors={['rgba(255,59,48,0.2)', 'rgba(239,68,68,0.1)']}
                             style={styles.logoutGradient}
                         >
-                            <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                            <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+                            <Ionicons name="log-out-outline" size={24} color={isDark ? "#FF3B30" : "#EF4444"} />
+                            <Text style={[styles.logoutText, { color: isDark ? "#FF3B30" : "#EF4444" }]}>{t('profile.logout')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </Animated.View>
@@ -325,23 +382,57 @@ export default function Profile() {
                 onRequestClose={() => setLanguageModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{t('profile.selectLanguage')}</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.selectLanguage')}</Text>
                             <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="white" />
+                                <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity style={styles.languageOption} onPress={() => changeLanguage('en')}>
-                            <Text style={[styles.languageText, i18n.language === 'en' && styles.activeLanguageText]}>English</Text>
-                            {i18n.language === 'en' && <Ionicons name="checkmark" size={24} color="#A78BFA" />}
+                        <TouchableOpacity style={[styles.languageOption, { borderBottomColor: colors.border }]} onPress={() => changeLanguage('en')}>
+                            <Text style={[styles.languageText, { color: colors.textSecondary }, i18n.language === 'en' && { color: colors.tint, fontWeight: 'bold' }]}>English</Text>
+                            {i18n.language === 'en' && <Ionicons name="checkmark" size={24} color={colors.tint} />}
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.languageOption} onPress={() => changeLanguage('mn')}>
-                            <Text style={[styles.languageText, i18n.language === 'mn' && styles.activeLanguageText]}>Монгол</Text>
-                            {i18n.language === 'mn' && <Ionicons name="checkmark" size={24} color="#A78BFA" />}
+                        <TouchableOpacity style={[styles.languageOption, { borderBottomColor: colors.border }]} onPress={() => changeLanguage('mn')}>
+                            <Text style={[styles.languageText, { color: colors.textSecondary }, i18n.language === 'mn' && { color: colors.tint, fontWeight: 'bold' }]}>Монгол</Text>
+                            {i18n.language === 'mn' && <Ionicons name="checkmark" size={24} color={colors.tint} />}
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={themeModalVisible}
+                onRequestClose={() => setThemeModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.selectTheme') || 'Select Theme'}</Text>
+                            <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
+                                <Ionicons name="close" size={24} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {(['light', 'dark'] as const).map((tMode) => (
+                            <TouchableOpacity
+                                key={tMode}
+                                style={[styles.languageOption, { borderBottomColor: colors.border }]}
+                                onPress={() => {
+                                    setMode(tMode);
+                                    setThemeModalVisible(false);
+                                }}
+                            >
+                                <Text style={[styles.languageText, { color: colors.textSecondary }, mode === tMode && { color: colors.tint, fontWeight: 'bold' }]}>
+                                    {tMode.charAt(0).toUpperCase() + tMode.slice(1)}
+                                </Text>
+                                {mode === tMode && <Ionicons name="checkmark" size={24} color={colors.tint} />}
+                            </TouchableOpacity>
+                        ))}
                     </View>
                 </View>
             </Modal>
@@ -359,7 +450,6 @@ const styles = StyleSheet.create({
         height: 300,
         borderRadius: 150,
         opacity: 0.25,
-        filter: 'blur(80px)',
     },
     header: {
         paddingHorizontal: 20,
@@ -427,14 +517,24 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 6,
     },
-    email: {
-        fontSize: 15,
-        color: 'rgba(255,255,255,0.7)',
-        marginBottom: 4,
+    contactInfo: {
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 4,
     },
-    emailSecondary: {
+    contactItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    contactText: {
+        fontSize: 16,
+        color: 'white',
+        fontWeight: '500',
+    },
+    contactTextSecondary: {
         fontSize: 14,
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(255,255,255,0.7)',
     },
     memberSince: {
         flexDirection: 'row',
@@ -509,13 +609,11 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#1a1642',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         padding: 24,
         paddingBottom: 40,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
     },
     modalHeader: {
         flexDirection: 'row',
@@ -534,7 +632,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
     },
     languageText: {
         fontSize: 16,
