@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { searchUsers, UserSearchResponse } from '../src/api/client';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function UserSearch() {
     const { t } = useTranslation();
     const router = useRouter();
     const params = useLocalSearchParams();
+    const { colors, isDark } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResponse['data']>([]);
     const [loading, setLoading] = useState(false);
@@ -61,12 +64,18 @@ export default function UserSearch() {
 
     return (
         <LinearGradient
-            colors={['#1E1B4B', '#312E81', '#4C1D95', '#5B21B6']}
+            colors={colors.backgroundGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <View style={[styles.glow, { top: '5%', left: '-15%', backgroundColor: colors.glows[0], width: 400, height: 400, opacity: isDark ? 0.18 : 0.25 }]} />
+                <View style={[styles.glow, { top: '35%', right: '-25%', backgroundColor: colors.glows[1], width: 350, height: 350, opacity: isDark ? 0.15 : 0.2 }]} />
+                <View style={[styles.glow, { bottom: '5%', right: '-15%', backgroundColor: colors.glows[2], width: 380, height: 380, opacity: isDark ? 0.18 : 0.25 }]} />
+            </View>
 
             {/* Header */}
             <Animated.View
@@ -82,32 +91,32 @@ export default function UserSearch() {
                     onPress={() => params.from === 'scan' ? router.navigate('/scan') : router.back()}
                     style={styles.backButtonContainer}
                 >
-                    <Ionicons name="arrow-back" size={24} color="white" />
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{t('userSearch.title')}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('userSearch.title')}</Text>
                 <View style={{ width: 40 }} />
             </Animated.View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Search Bar */}
                 <Animated.View
-                    style={[
-                        styles.searchContainer,
-                        {
-                            opacity: fadeAnim,
-                            transform: [{ translateY: slideAnim }],
-                        }
-                    ]}
+                    style={{
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                        marginBottom: 24,
+                    }}
                 >
-                    <Ionicons name="search" size={20} color="rgba(255,255,255,0.7)" />
-                    <TextInput
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                        placeholder={t('userSearch.searchPlaceholder')}
-                        placeholderTextColor="rgba(255,255,255,0.5)"
-                        style={styles.searchInput}
-                        autoFocus={true}
-                    />
+                    <BlurView intensity={isDark ? 30 : 50} tint={isDark ? "dark" : "light"} style={[styles.searchContainer, { borderColor: colors.glassBorder }]}>
+                        <Ionicons name="search" size={20} color={colors.textSecondary} />
+                        <TextInput
+                            value={searchQuery}
+                            onChangeText={handleSearch}
+                            placeholder={t('userSearch.searchPlaceholder')}
+                            placeholderTextColor={colors.textSecondary}
+                            style={[styles.searchInput, { color: colors.text }]}
+                            autoFocus={true}
+                        />
+                    </BlurView>
                 </Animated.View>
 
                 {/* Search Results */}
@@ -117,7 +126,7 @@ export default function UserSearch() {
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Text style={styles.sectionTitle}>{t('userSearch.section.results')}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('userSearch.section.results')}</Text>
                     {loading ? (
                         <ActivityIndicator color="#A78BFA" style={{ marginBottom: 20 }} />
                     ) : (
@@ -126,7 +135,6 @@ export default function UserSearch() {
                                 searchResults.map(user => (
                                     <TouchableOpacity
                                         key={user.userId}
-                                        style={styles.contactCard}
                                         onPress={() => router.push({
                                             pathname: '/transfer-confirm',
                                             params: {
@@ -139,22 +147,24 @@ export default function UserSearch() {
                                         })}
                                         activeOpacity={0.7}
                                     >
-                                        <View style={styles.contactLeft}>
-                                            <View style={styles.contactAvatar}>
-                                                <Text style={styles.contactAvatarText}>{user.name.charAt(0)}</Text>
+                                        <BlurView intensity={isDark ? 20 : 50} tint={isDark ? "light" : "default"} style={[styles.contactCard, { borderColor: colors.glassBorder }]}>
+                                            <View style={styles.contactLeft}>
+                                                <View style={[styles.contactAvatar, { backgroundColor: colors.tint, borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }]}>
+                                                    <Text style={styles.contactAvatarText}>{user.name.charAt(0)}</Text>
+                                                </View>
+                                                <View>
+                                                    <Text style={[styles.contactName, { color: colors.text }]}>{user.name}</Text>
+                                                    <Text style={[styles.contactPhone, { color: colors.textSecondary }]}>{user.phone}</Text>
+                                                </View>
                                             </View>
-                                            <View>
-                                                <Text style={styles.contactName}>{user.name}</Text>
-                                                <Text style={styles.contactPhone}>{user.phone}</Text>
+                                            <View style={[styles.selectButton, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                                                <Ionicons name="arrow-forward" size={16} color="white" />
                                             </View>
-                                        </View>
-                                        <View style={styles.selectButton}>
-                                            <Ionicons name="arrow-forward" size={16} color="white" />
-                                        </View>
+                                        </BlurView>
                                     </TouchableOpacity>
                                 ))
                             ) : (
-                                searchQuery.length > 2 && <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 20 }}>{t('userSearch.noUsers')}</Text>
+                                searchQuery.length > 2 && <Text style={{ color: colors.textSecondary, textAlign: 'center', marginBottom: 20 }}>{t('userSearch.noUsers')}</Text>
                             )}
                         </View>
                     )}
@@ -167,7 +177,7 @@ export default function UserSearch() {
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Text style={styles.sectionTitle}>{t('userSearch.section.quickSend')}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('userSearch.section.quickSend')}</Text>
                     <View style={styles.quickSendContainer}>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -176,7 +186,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="call" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.phone')}</Text>
+                            <Text style={[styles.quickSendText, { color: colors.textSecondary }]}>{t('userSearch.quickSend.phone')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -185,7 +195,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="mail" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.email')}</Text>
+                            <Text style={[styles.quickSendText, { color: colors.textSecondary }]}>{t('userSearch.quickSend.email')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.quickSendButton} activeOpacity={0.7}>
                             <LinearGradient
@@ -194,7 +204,7 @@ export default function UserSearch() {
                             >
                                 <Ionicons name="qr-code" size={24} color="white" />
                             </LinearGradient>
-                            <Text style={styles.quickSendText}>{t('userSearch.quickSend.qrCode')}</Text>
+                            <Text style={[styles.quickSendText, { color: colors.textSecondary }]}>{t('userSearch.quickSend.qrCode')}</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -214,6 +224,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 60,
         paddingBottom: 20,
+    },
+    glow: {
+        position: 'absolute',
+        borderRadius: 200,
+        filter: 'blur(80px)',
     },
     backButtonContainer: {
         width: 40,
@@ -235,18 +250,15 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 20,
         paddingHorizontal: 16,
         paddingVertical: 14,
-        marginBottom: 24,
         gap: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        overflow: 'hidden',
     },
     searchInput: {
         flex: 1,
-        color: 'white',
         fontSize: 16,
         fontWeight: '500',
     },
@@ -263,12 +275,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.08)',
         borderRadius: 20,
         padding: 16,
-        marginBottom: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        overflow: 'hidden',
     },
     contactLeft: {
         flexDirection: 'row',
@@ -284,7 +294,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: 16,
         borderWidth: 2,
-        borderColor: 'rgba(167, 139, 250, 0.3)',
     },
     contactAvatarText: {
         fontSize: 20,

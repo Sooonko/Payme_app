@@ -11,8 +11,75 @@
         "logout": "Log Out",
         "language": "Language",
         "selectLanguage": "Select Language",
-        "cancel": "Cancel",
-        "selectTheme": "Dark"
+        "theme": "Theme",
+        "selectTheme": "Select Theme",
+        "modes": {
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "cancel": "Cancel"
+    },
+    "loan": {
+        "title": "Loan",
+        "myLoans": "My Loans",
+        "products": "Loan Products",
+        "banner": {
+            "increaseLimit": {
+                "title": "Increase Limit",
+                "subtitle": "Your credit limit can be increased by up to 10,000,000₮."
+            },
+            "instantLoan": {
+                "title": "Instant Loan",
+                "subtitle": "Get your loan in 5 minutes."
+            },
+            "smartFinance": {
+                "title": "Smart Finance",
+                "subtitle": "Low interest and flexible term loans."
+            }
+        },
+        "product": {
+            "months": "months",
+            "checkEligibility": "Check Eligibility",
+            "eligibleAmount": "Eligible Limit",
+            "check": "Check",
+            "checked": "Checked",
+            "apply": "Apply"
+        },
+        "active": {
+            "remainingBalance": "Remaining Balance",
+            "totalAmount": "Total Amount",
+            "endDate": "Due Date",
+            "repay": "Repay Loan",
+            "status": {
+                "ACTIVE": "Active",
+                "PENDING": "Pending",
+                "CLOSED": "Closed",
+                "OVERDUE": "Overdue"
+            }
+        },
+        "modal": {
+            "amount": "Requested Amount",
+            "term": "Term (months)",
+            "submit": "Submit Request",
+            "successTitle": "Loan Approved!",
+            "approvedAmount": "Approved Amount",
+            "getLoan": "Get Loan",
+            "repayTitle": "Repay Loan",
+            "repayAmount": "Repay Amount",
+            "balance": "Balance",
+            "pay": "Pay"
+        },
+        "alerts": {
+            "success": "Success",
+            "error": "Error",
+            "checkSuccess": "Eligibility checked successfully.",
+            "checkError": "Error checking eligibility.",
+            "invalidAmount": "Please enter a valid amount",
+            "applySuccess": "Loan disbursed successfully.",
+            "applyError": "Error applying for loan.",
+            "repaySuccess": "Loan repaid successfully.",
+            "repayError": "Error repaying loan."
+        }
     },
     "landing": {
         "title": "PAYME",
@@ -36,6 +103,7 @@
         }
     },
     "login": {
+        "title": "Log In",
         "welcome": "Welcome Back!",
         "subtitle": "Sign in to continue",
         "email": "Email",
@@ -101,7 +169,35 @@
             "buy": "Buy"
         },
         "recentTransactions": "Recent Transactions",
-        "viewAll": "View all"
+        "viewAll": "View All",
+        "cardHolder": "CARD HOLDER",
+        "loyaltyCard": "LOYALTY CARD",
+        "goldMember": "GOLD MEMBER",
+        "banner": {
+            "smartPayment": {
+                "title": "Smart Payment",
+                "subtitle": "Pay your bills faster and safer with Payme."
+            },
+            "globalTransfer": {
+                "title": "Global Transfer",
+                "subtitle": "Send money anywhere in the world instantly."
+            },
+            "creditControl": {
+                "title": "Credit Control",
+                "subtitle": "Manage your cards and loans in one place."
+            }
+        },
+        "ecosystem": {
+            "seeme": {
+                "desc": "Visual identity verification"
+            },
+            "trapme": {
+                "desc": "Security & anti-fraud"
+            },
+            "netme": {
+                "desc": "Global connection hub"
+            }
+        }
     },
     "wallet": {
         "title": "Send Money",

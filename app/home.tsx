@@ -27,9 +27,9 @@ export default function Home() {
     const [bannerIndex, setBannerIndex] = useState(0);
     const [cardIndex, setCardIndex] = useState(0);
     const bannerItems = [
-        { id: 1, title: "Smart Payment", subtitle: "Pay your bills faster and safer with Payme.", image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop" },
-        { id: 2, title: "Global Transfer", subtitle: "Send money anywhere in the world instantly.", image: "https://images.unsplash.com/photo-1550565118-3d1428df732f?q=80&w=800&auto=format&fit=crop" },
-        { id: 3, title: "Credit Control", subtitle: "Manage your cards and loans in one place.", image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=800&auto=format&fit=crop" }
+        { id: 1, title: t('home.banner.smartPayment.title'), subtitle: t('home.banner.smartPayment.subtitle'), image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop" },
+        { id: 2, title: t('home.banner.globalTransfer.title'), subtitle: t('home.banner.globalTransfer.subtitle'), image: "https://images.unsplash.com/photo-1550565118-3d1428df732f?q=80&w=800&auto=format&fit=crop" },
+        { id: 3, title: t('home.banner.creditControl.title'), subtitle: t('home.banner.creditControl.subtitle'), image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=800&auto=format&fit=crop" }
     ];
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -113,9 +113,9 @@ export default function Home() {
     );
 
     const ecosystemItems = [
-        { id: 'seeme', title: 'seeme', desc: 'Visual identity verification', icon: 'eye-outline', color: '#60A5FA' },
-        { id: 'trapme', title: 'trapme', desc: 'Security & anti-fraud', icon: 'shield-outline', color: '#A78BFA' },
-        { id: 'netme', title: 'netme', desc: 'Global connection hub', icon: 'globe-outline', color: '#34D399' },
+        { id: 'seeme', title: 'seeme', desc: t('home.ecosystem.seeme.desc'), icon: 'eye-outline', color: '#60A5FA' },
+        { id: 'trapme', title: 'trapme', desc: t('home.ecosystem.trapme.desc'), icon: 'shield-outline', color: '#A78BFA' },
+        { id: 'netme', title: 'netme', desc: t('home.ecosystem.netme.desc'), icon: 'globe-outline', color: '#34D399' },
     ];
 
 
@@ -171,7 +171,7 @@ export default function Home() {
                             <ActivityIndicator color="white" />
                         ) : (
                             <Text style={[styles.totalBalanceAmount, { color: colors.text }]}>
-                                {isBalanceVisible ? `₮${(balance || 24500).toLocaleString()}` : '₮ ••••••'}
+                                {isBalanceVisible ? `₮${(balance ?? 0).toLocaleString()}` : '₮ ••••••'}
                             </Text>
                         )}
                         <View style={styles.cardSliderContainer}>
@@ -194,7 +194,7 @@ export default function Home() {
                                         <Text style={[styles.cardNumber, { color: isDark ? 'white' : colors.text }]}>••••  ••••  ••••  3876</Text>
                                         <View style={styles.cardFooter}>
                                             <View>
-                                                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>CARD HOLDER</Text>
+                                                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>{t('home.cardHolder')}</Text>
                                                 <Text style={[styles.cardHolderName, { color: isDark ? 'white' : colors.text }]}>JONSON</Text>
                                             </View>
                                             <View style={styles.cardFooterRight}>
@@ -219,7 +219,7 @@ export default function Home() {
                                     <BlurView intensity={isDark ? 40 : 80} tint={isDark ? "light" : "default"} style={[styles.glassCard, styles.loyaltyCardBack, { borderColor: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(251, 191, 36, 0.5)' }]}>
                                         <View style={styles.loyaltyCardContent}>
                                             <View>
-                                                <Text style={styles.loyaltyLabel}>LOYALTY CARD</Text>
+                                                <Text style={styles.loyaltyLabel}>{t('home.loyaltyCard')}</Text>
                                                 <Text style={[styles.loyaltyPoints, { color: isDark ? 'white' : colors.text }]}>2,450 pts</Text>
                                             </View>
                                             <View style={[styles.loyaltyIconBox, { borderColor: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(251, 191, 36, 0.5)' }]}>
@@ -227,7 +227,7 @@ export default function Home() {
                                             </View>
                                         </View>
                                         <View style={styles.loyaltyCardFooter}>
-                                            <Text style={[styles.loyaltyMemberName, { color: colors.textSecondary }]}>GOLD MEMBER</Text>
+                                            <Text style={[styles.loyaltyMemberName, { color: colors.textSecondary }]}>{t('home.goldMember')}</Text>
                                             <View style={[styles.loyaltyProgress, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                                                 <View style={[styles.loyaltyProgressBar, { width: '70%' }]} />
                                             </View>

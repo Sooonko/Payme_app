@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -78,6 +79,7 @@ export default function Profile() {
 
     const handleLogout = async () => {
         await SecureStore.deleteItemAsync('userToken');
+        await SecureStore.deleteItemAsync('userInfo');
         setUser(null);
         setLoading(true);
         router.replace('/login');
@@ -320,7 +322,7 @@ export default function Profile() {
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text style={{ color: colors.textSecondary, marginRight: 8 }}>
-                                    {i18n.language === 'mn' ? 'Монгол' : 'English'}
+                                    {i18n.language === 'mn' ? 'Монгол' : i18n.language === 'ko' ? '한국어' : 'English'}
                                 </Text>
                                 <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                             </View>
@@ -340,11 +342,11 @@ export default function Profile() {
                                 >
                                     <Ionicons name={isDark ? "moon-outline" : "sunny-outline"} size={20} color="white" />
                                 </LinearGradient>
-                                <Text style={[styles.menuText, { color: colors.text }]}>Theme</Text>
+                                <Text style={[styles.menuText, { color: colors.text }]}>{t('profile.theme')}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text style={{ color: colors.textSecondary, marginRight: 8 }}>
-                                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                    {t(`profile.modes.${mode}`)}
                                 </Text>
                                 <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
                             </View>
@@ -376,13 +378,13 @@ export default function Profile() {
             </ScrollView>
 
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={languageModalVisible}
                 onRequestClose={() => setLanguageModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={[styles.modalContent, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.selectLanguage')}</Text>
                             <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
@@ -399,20 +401,25 @@ export default function Profile() {
                             <Text style={[styles.languageText, { color: colors.textSecondary }, i18n.language === 'mn' && { color: colors.tint, fontWeight: 'bold' }]}>Монгол</Text>
                             {i18n.language === 'mn' && <Ionicons name="checkmark" size={24} color={colors.tint} />}
                         </TouchableOpacity>
-                    </View>
+
+                        <TouchableOpacity style={[styles.languageOption, { borderBottomColor: colors.border }]} onPress={() => changeLanguage('ko')}>
+                            <Text style={[styles.languageText, { color: colors.textSecondary }, i18n.language === 'ko' && { color: colors.tint, fontWeight: 'bold' }]}>한국어</Text>
+                            {i18n.language === 'ko' && <Ionicons name="checkmark" size={24} color={colors.tint} />}
+                        </TouchableOpacity>
+                    </BlurView>
                 </View>
             </Modal>
 
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={themeModalVisible}
                 onRequestClose={() => setThemeModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={[styles.modalContent, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.selectTheme') || 'Select Theme'}</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.selectTheme')}</Text>
                             <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
                                 <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
@@ -428,12 +435,12 @@ export default function Profile() {
                                 }}
                             >
                                 <Text style={[styles.languageText, { color: colors.textSecondary }, mode === tMode && { color: colors.tint, fontWeight: 'bold' }]}>
-                                    {tMode.charAt(0).toUpperCase() + tMode.slice(1)}
+                                    {t(`profile.modes.${tMode}`)}
                                 </Text>
                                 {mode === tMode && <Ionicons name="checkmark" size={24} color={colors.tint} />}
                             </TouchableOpacity>
                         ))}
-                    </View>
+                    </BlurView>
                 </View>
             </Modal>
         </LinearGradient>

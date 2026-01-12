@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Animated, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { registerUser } from '../src/api/client';
@@ -39,6 +39,33 @@ export default function Register() {
     const iconFloatAnim = useRef(new Animated.Value(0)).current;
     const iconGlowAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useFocusEffect(
+        useCallback(() => {
+            // Reset form state
+            setName('');
+            setEmail('');
+            setPhoneNumber('');
+            setPassword('');
+            setErrors({ name: '', email: '', phone: '', password: '' });
+            setLoading(false);
+            setShowPassword(false);
+
+            // Reset focus states
+            setNameFocused(false);
+            setEmailFocused(false);
+            setPhoneFocused(false);
+            setPasswordFocused(false);
+
+            // Reset animations
+            nameLabelAnim.setValue(0);
+            emailLabelAnim.setValue(0);
+            phoneLabelAnim.setValue(0);
+            passwordLabelAnim.setValue(0);
+            buttonScaleAnim.setValue(1);
+            shimmerAnim.setValue(0);
+        }, [])
+    );
 
     // Auto-show floating labels when values exist
     useEffect(() => {

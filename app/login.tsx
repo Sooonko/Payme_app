@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Modal, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { loginUser } from '../src/api/client';
@@ -21,6 +21,34 @@ export default function Login() {
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Clear state when screen is focused (e.g. after logout)
+    useFocusEffect(
+        useCallback(() => {
+            const checkSession = async () => {
+                const token = await SecureStore.getItemAsync('userToken');
+                if (!token) {
+                    // Reset all state if no token (logged out)
+                    setEmail('');
+                    setPassword('');
+                    setErrors({ email: '', password: '' });
+                    setLoading(false);
+                    setShowErrorModal(false);
+                    setEmailFocused(false);
+                    setPasswordFocused(false);
+
+                    // Reset animations
+                    emailLabelAnim.setValue(0);
+                    passwordLabelAnim.setValue(0);
+                    buttonScaleAnim.setValue(1);
+                    iconFloatAnim.setValue(0);
+                    iconGlowAnim.setValue(0);
+                    pulseAnim.setValue(1);
+                }
+            };
+            checkSession();
+        }, [])
+    );
 
     // Animation values
     const emailLabelAnim = useRef(new Animated.Value(0)).current;
