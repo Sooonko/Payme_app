@@ -1,0 +1,11 @@
+services:
+  landing-page:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: landing-page
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
