@@ -1,0 +1,56 @@
+{
+    "nav": {
+        "features": "기능",
+        "about": "소개",
+        "contact": "문의",
+        "login": "로그인",
+        "getStarted": "시작하기"
+    },
+    "hero": {
+        "title1": "결제의",
+        "title2": "미래가 왔습니다.",
+        "subtitle": "빠르고 안전하며 쉬운 글로벌 송금. 매일 Payme를 신뢰하는 수백만 사용자와 함께하세요.",
+        "appStore": "App Store",
+        "downloadOn": "다운로드",
+        "googlePlay": "Google Play",
+        "getItOn": "다운로드"
+    },
+    "features": {
+        "sectionTitle": "왜 Payme를 선택할까요?",
+        "sectionSubtitle": "당신을 위해 설계된 차세대 금융 기술 기능을 경험하세요.",
+        "speed": {
+            "title": "속도",
+            "description": "즉시 송금과 실시간 거래 업데이트로 기다릴 필요가 없습니다."
+        },
+        "security": {
+            "title": "보안",
+            "description": "은행 수준의 암호화와 다단계 인증으로 돈을 안전하게 보호합니다."
+        },
+        "wallet": {
+            "title": "지갑",
+            "description": "여러 통화를 관리하고 한 곳에서 쉽게 지출 습관을 추적하세요."
+        }
+    },
+    "cta": {
+        "title": "전 세계 수백만 사용자와 함께하세요.",
+        "subtitle": "지금 Payme를 다운로드하세요!",
+        "button": "지금 시작하기"
+    },
+    "footer": {
+        "description": "전 세계 어디서나 재정을 관리하는 안전하고 빠르고 쉬운 방법.",
+        "product": "제품",
+        "features": "기능",
+        "pricing": "가격",
+        "security": "보안",
+        "download": "다운로드",
+        "company": "회사",
+        "about": "소개",
+        "careers": "채용",
+        "press": "언론",
+        "contact": "문의",
+        "followUs": "팔로우하기",
+        "copyright": "Payme Inc. All rights reserved.",
+        "privacy": "개인정보 보호정책",
+        "terms": "서비스 약관"
+    }
+}

@@ -1,17 +1,19 @@
-import Constants from 'expo-constants';
 
 const getApiBaseUrl = () => {
-    if (__DEV__) {
-        // Get the IP address of the machine running the Metro bundler
-        const debuggerHost = Constants.expoConfig?.hostUri;
-        const localhost = debuggerHost?.split(':')[0];
+    // User requested to point to this specific server which has the updated version
+    return 'http://192.168.0.171:8090';
 
-        if (localhost) {
-            return `http://${localhost}:8080`;
-        }
-    }
-    // Fallback for production or if debuggerHost is missing
-    return 'http://localhost:8080';
+    // if (__DEV__) {
+    //     // Get the IP address of the machine running the Metro bundler
+    //     const debuggerHost = Constants.expoConfig?.hostUri;
+    //     const localhost = debuggerHost?.split(':')[0];
+
+    //     if (localhost) {
+    //         return `http://${localhost}:8080`;
+    //     }
+    // }
+    // // Fallback for production or if debuggerHost is missing
+    // return 'http://localhost:8080';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
