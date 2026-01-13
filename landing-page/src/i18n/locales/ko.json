@@ -9,11 +9,53 @@
     "hero": {
         "title1": "결제의",
         "title2": "미래가 왔습니다.",
-        "subtitle": "빠르고 안전하며 쉬운 글로벌 송금. 매일 Payme를 신뢰하는 수백만 사용자와 함께하세요.",
+        "subtitle": "빠르고 안전하며 쉬운 글로벌 송금. 매일 Payme를 신뢰하는 수천 명의 사용자와 함께하세요.",
         "appStore": "App Store",
         "downloadOn": "다운로드",
         "googlePlay": "Google Play",
         "getItOn": "다운로드"
+    },
+    "howItWorks": {
+        "title": "어떻게 작동하나요?",
+        "subtitle": "3단계로 간단하게 시작하세요",
+        "step1": {
+            "title": "앱 다운로드",
+            "description": "App Store 또는 Google Play에서 Payme 앱을 무료로 다운로드하세요."
+        },
+        "step2": {
+            "title": "회원가입",
+            "description": "전화번호와 이메일로 몇 초 만에 가입하세요."
+        },
+        "step3": {
+            "title": "송금 시작",
+            "description": "친구와 가족에게 즉시 송금을 시작하세요."
+        }
+    },
+    "stats": {
+        "users": "사용자",
+        "countries": "국가",
+        "transactions": "거래 금액",
+        "uptime": "서비스 가동률"
+    },
+    "security": {
+        "title": "보안이 최우선입니다",
+        "subtitle": "세계 최고 수준의 보안 기술로 고객님의 자산을 보호합니다.",
+        "bankGrade": {
+            "title": "은행급 보안",
+            "description": "SSL/TLS 암호화를 통한 안전한 연결."
+        },
+        "encryption": {
+            "title": "데이터 암호화",
+            "description": "모든 정보는 AES-256으로 암호화됩니다."
+        },
+        "biometric": {
+            "title": "생체 인증",
+            "description": "지문 또는 FaceID로 로그인하세요."
+        },
+        "monitoring": {
+            "title": "24시간 모니터링",
+            "description": "의심스러운 활동을 즉시 감지하고 차단합니다."
+        }
     },
     "features": {
         "sectionTitle": "왜 Payme를 선택할까요?",
@@ -29,6 +71,14 @@
         "wallet": {
             "title": "지갑",
             "description": "여러 통화를 관리하고 한 곳에서 쉽게 지출 습관을 추적하세요."
+        },
+        "loans": {
+            "title": "유연한 대출",
+            "description": "다양한 필요에 맞는 대출을 쉽고 빠르게 받을 수 있습니다."
+        },
+        "cards": {
+            "title": "다중 카드 연결",
+            "description": "모든 은행 카드를 한 곳에 연결하여 관리하세요."
         }
     },
     "cta": {

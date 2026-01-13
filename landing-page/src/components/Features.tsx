@@ -1,18 +1,13 @@
 "use client";
 
-import { ShieldCheck, Wallet, Zap } from "lucide-react";
+import { Banknote, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function Features() {
     const { t } = useTranslation();
 
     const features = [
-        {
-            icon: Zap,
-            title: t("features.speed.title"),
-            description: t("features.speed.description"),
-            color: "bg-cyan-500",
-        },
+
         {
             icon: ShieldCheck,
             title: t("features.security.title"),
@@ -24,6 +19,18 @@ export default function Features() {
             title: t("features.wallet.title"),
             description: t("features.wallet.description"),
             color: "bg-pink-500",
+        },
+        {
+            icon: Banknote,
+            title: t("features.loans.title"),
+            description: t("features.loans.description"),
+            color: "bg-green-500",
+        },
+        {
+            icon: CreditCard,
+            title: t("features.cards.title"),
+            description: t("features.cards.description"),
+            color: "bg-orange-500",
         },
     ];
 
@@ -37,7 +44,7 @@ export default function Features() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-3 gap-8 justify-center">
                     {features.map((feature, index) => (
                         <div
                             key={index}

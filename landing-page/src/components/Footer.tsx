@@ -13,11 +13,12 @@ export default function Footer() {
                 <div className="grid md:grid-cols-4 gap-12 mb-12">
                     {/* Brand */}
                     <div className="col-span-1 md:col-span-1">
-                        <Link href="/" className="flex items-center gap-2 mb-6">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-500 to-cyan-400 flex items-center justify-center">
-                                <span className="text-white font-bold">P</span>
-                            </div>
-                            <span className="text-xl font-bold">Payme</span>
+                        <Link href="/" className="flex items-center mb-6">
+                            <img
+                                src="/logo/logo.png"
+                                alt="Payme"
+                                className="h-8 w-auto"
+                            />
                         </Link>
                         <p className="text-gray-400 text-sm leading-relaxed">
                             {t("footer.description")}
