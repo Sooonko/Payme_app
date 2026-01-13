@@ -1,77 +1,86 @@
 name: Build and Deploy Landing Page
 
 on:
-    push:
-        branches:
-            - main
-        paths:
-            - "landing-page/**"
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "landing-page/**"
+  workflow_dispatch:
 
 env:
-    REGISTRY: ghcr.io
-    IMAGE_NAME: ${{ github.repository }}/landing-page
+  REGISTRY: ghcr.io
 
 jobs:
-    build-and-push:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            packages: write
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_name: ${{ steps.set-image.outputs.image_name }}
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+      - name: Set lowercase image name
+        id: set-image
+        run: |
+          IMAGE_NAME="${{ github.repository }}/landing-page"
+          echo "image_name=${IMAGE_NAME,,}" >> $GITHUB_OUTPUT
 
-            - name: Log in to Container Registry
-              uses: docker/login-action@v3
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-            - name: Extract metadata
-              id: meta
-              uses: docker/metadata-action@v5
-              with:
-                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-                  tags: |
-                      type=ref,event=branch
-                      type=sha,prefix=
-                      type=raw,value=latest,enable={{is_default_branch}}
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Build and push Docker image
-              uses: docker/build-push-action@v5
-              with:
-                  context: ./landing-page
-                  push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.set-image.outputs.image_name }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
 
-    deploy:
-        needs: build-and-push
-        runs-on: self-hosted
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./landing-page
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-        steps:
-            - name: Pull and run new container
-              run: |
-                  # Stop and remove existing container if exists
-                  docker stop landing-page || true
-                  docker rm landing-page || true
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
 
-                  # Pull latest image
-                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    steps:
+      - name: Pull and run new container
+        env:
+          IMAGE_NAME: ${{ needs.build-and-push.outputs.image_name }}
+        run: |
+          # Stop and remove existing container if exists
+          docker stop landing-page 2>/dev/null || true
+          docker rm landing-page 2>/dev/null || true
 
-                  # Run new container
-                  docker run -d \
-                    --name landing-page \
-                    --restart unless-stopped \
-                    -p 3001:3000 \
-                    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # Pull latest image
+          docker pull ghcr.io/${IMAGE_NAME}:latest
 
-                  echo "✅ Landing page deployed successfully!"
+          # Run new container
+          docker run -d \
+            --name landing-page \
+            --restart unless-stopped \
+            -p 3001:3000 \
+            ghcr.io/${IMAGE_NAME}:latest
+
+          echo "✅ Landing page deployed successfully!"
