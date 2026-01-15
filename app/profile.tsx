@@ -5,7 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUserProfile, UserProfileResponse } from '../src/api/client';
 import { useTheme } from '../src/contexts/ThemeContext';
 
@@ -77,12 +77,28 @@ export default function Profile() {
         }
     };
 
-    const handleLogout = async () => {
-        await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('userInfo');
-        setUser(null);
-        setLoading(true);
-        router.replace('/login');
+    const handleLogout = () => {
+        Alert.alert(
+            t('profile.logout'),
+            t('profile.logoutConfirm'),
+            [
+                {
+                    text: t('profile.cancel'),
+                    style: 'cancel',
+                },
+                {
+                    text: t('profile.logout'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        await SecureStore.deleteItemAsync('userToken');
+                        await SecureStore.deleteItemAsync('userInfo');
+                        setUser(null);
+                        setLoading(true);
+                        router.replace('/login');
+                    },
+                },
+            ]
+        );
     };
 
     const formatMemberSince = (dateString: string) => {

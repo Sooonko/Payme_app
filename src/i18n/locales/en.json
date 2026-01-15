@@ -9,6 +9,7 @@
         "helpSupport": "Help & Support",
         "settings": "Settings",
         "logout": "Log Out",
+        "logoutConfirm": "Are you sure you want to log out?",
         "language": "Language",
         "selectLanguage": "Select Language",
         "theme": "Theme",
